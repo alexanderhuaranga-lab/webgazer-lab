@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGazer Lab - Práctica Eye Tracking</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="main-layout">
+            <!-- Columna izquierda: Cámara -->
+            <aside class="camera-sidebar">
+                <div id="cameraContainer" class="camera-preview">
+                    <div class="camera-placeholder">
+                        <p>📷</p>
+                        <p>Cámara inactiva</p>
+                    </div>
+                </div>
+                <div class="camera-info">
+                    <p><strong>Vista de cámara</strong></p>
+                    <p>Detección facial activa</p>
+                </div>
+            </aside>
+    
+            <!-- Columna derecha: Contenido principal -->
+            <div class="content-area">
+                <header>
+                    <h1>WebGazer Lab</h1>
+                    <p class="subtitle">Práctica de Eye Tracking - UX/UI Laboratory</p>
+                </header>
+    
+                <main>
+                    <!-- Estado del sistema -->
+                    <div id="status" class="status">
+                        <p>Estado: <span id="statusText">No iniciado</span></p>
+                    </div>
+    
+                    <!-- Controles básicos -->
+                    <div class="controls">
+                        <button id="btnStart" class="btn btn-primary">Iniciar WebGazer</button>
+                        <button id="btnCalibrate" class="btn btn-calibrate" disabled>Calibrar</button>
+                        <button id="btnStop" class="btn btn-secondary" disabled>Detener</button>
+                    </div>
+
+                    <!-- ✅ NUEVO: Sección de test (solo visible después de calibrar) -->
+                    <div class="test-section" id="testSection" style="display: none;">
+                        <div class="test-info">
+                            <h3>🧪 Test de Usabilidad</h3>
+                            <p>Sistema calibrado correctamente. Ahora puedes iniciar el test de eye tracking.</p>
+                        </div>
+                        <button id="btnStartTest" class="btn btn-test">Iniciar Test de Usabilidad</button>
+                    </div>
+    
+                    <!-- Área de visualización -->
+                    <div id="gazeVisualization" class="visualization">
+                        <div id="gazeDot" class="gaze-dot"></div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor de calibración (overlay fullscreen) -->
+    <div id="calibrationContainer" class="calibration-container hidden">
+        <div class="calibration-instructions">
+            <h2>Calibración</h2>
+            <p id="calibrationInstructions">Mira fijamente cada punto y haz click cuando aparezca</p>
+            <div class="calibration-progress">
+                <span id="calibrationProgress">0/9</span>
+            </div>
+        </div>
+        <div id="calibrationPoint" class="calibration-point"></div>
+    </div>
+
+    <!-- WebGazer desde archivo local -->
+    <script src="lib/webgazer.js"></script>
+    
+    <!-- Nuestros módulos -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

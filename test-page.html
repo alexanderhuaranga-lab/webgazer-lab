@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Gestiona tus tareas de forma inteligente</title>
+    <link rel="stylesheet" href="css/test-page.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container-header">
+            <div class="logo">
+                <span class="logo-icon">✓</span>
+                <span class="logo-text">TaskFlow</span>
+            </div>
+            <nav class="nav">
+                <a href="#features">Características</a>
+                <a href="#pricing">Precios</a>
+                <a href="#about">Acerca de</a>
+                <a href="#contact">Contacto</a>
+                <a href="#help">Ayuda</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenido principal en una sola pantalla -->
+    <main class="main-content">
+        <div class="content-grid">
+            <!-- Sección izquierda: Información principal -->
+            <section class="info-section">
+                <h1 class="main-title">Organiza tus proyectos de manera efectiva</h1>
+                <p class="main-description">
+                    TaskFlow es la herramienta perfecta para equipos que buscan mejorar su productividad 
+                    y colaboración en tiempo real.
+                </p>
+                
+                <div class="features-list">
+                    <div class="feature-item">
+                        <span class="feature-icon">📋</span>
+                        <span>Gestión de tareas</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">👥</span>
+                        <span>Colaboración en equipo</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📊</span>
+                        <span>Reportes detallados</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🔔</span>
+                        <span>Notificaciones inteligentes</span>
+                    </div>
+                </div>
+
+                <!-- Botones distractores -->
+                <div class="action-buttons">
+                    <button class="btn btn-outline">Ver planes</button>
+                    <button class="btn btn-outline">Conocer más</button>
+                </div>
+            </section>
+
+            <!-- Sección central: Tarjetas de características -->
+            <section class="cards-section">
+                <div class="card">
+                    <div class="card-icon">🚀</div>
+                    <h3>Rápido y eficiente</h3>
+                    <p>Optimiza tu flujo de trabajo con herramientas inteligentes</p>
+                    <button class="card-btn">Explorar</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <h3>Seguimiento de objetivos</h3>
+                    <p>Mantén el control de tus metas y plazos importantes</p>
+                    <button class="card-btn">Saber más</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">💡</div>
+                    <h3>Ideas innovadoras</h3>
+                    <p>Captura y organiza todas tus ideas en un solo lugar</p>
+                    <button class="card-btn">Descubrir</button>
+                </div>
+
+                <div class="card card-special">
+                    <div class="card-icon">✨</div>
+                    <h3>Prueba sin costo</h3>
+                    <p>Comienza ahora y descubre todas las funcionalidades</p>
+                    <!-- ESTE ES EL BOTÓN OBJETIVO -->
+                    <button class="card-btn-special" id="ctaTarget">Iniciar prueba</button>
+                </div>
+            </section>
+
+            <!-- Sección derecha: Stats y testimonios -->
+            <section class="stats-section">
+                <div class="stat-box">
+                    <div class="stat-number">10,000+</div>
+                    <div class="stat-label">Usuarios activos</div>
+                </div>
+                
+                <div class="stat-box">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">Satisfacción</div>
+                </div>
+                
+                <div class="testimonial">
+                    <p>"TaskFlow transformó la forma en que trabajamos"</p>
+                    <span>- María González, CEO</span>
+                </div>
+
+                <div class="cta-box">
+                    <h4>¿Listo para empezar?</h4>
+                    <button class="btn btn-secondary">Contactar ventas</button>
+                    <button class="btn btn-outline">Ver demo</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#privacy">Privacidad</a>
+                <a href="#terms">Términos</a>
+                <a href="#support">Soporte</a>
+            </div>
+            <p>&copy; 2024 TaskFlow</p>
+        </div>
+    </footer>
+
+    <!-- Overlay de instrucciones -->
+    <div class="instructions-overlay" id="instructionsOverlay">
+        <div class="instructions-content">
+            <h2>Tarea de Usabilidad</h2>
+            <p class="task-description">
+                <strong>Tu objetivo:</strong><br>
+                Encuentra y haz clic en el botón para iniciar tu prueba gratuita de TaskFlow.
+            </p>
+            <p class="task-note">
+                Explora la interfaz y localiza la opción que te permita comenzar a usar la plataforma sin costo.
+            </p>
+            <p class="task-time">Tiempo límite: 60 segundos</p>
+            <button class="btn-start" id="btnStartTask">Iniciar Test</button>
+        </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer" id="timer" style="display: none;">
+        <span id="timerText">60s</span>
+    </div>
+
+    <!-- Banner de tarea -->
+    <div class="task-banner" id="taskBanner" style="display: none;">
+        <p><strong>TAREA:</strong> Encuentra y haz clic en el botón para iniciar tu prueba gratuita</p>
+    </div>
+
+    <!-- Controlador del test -->
+    <script type="module" src="js/test-controller.js"></script>
+</body>
+</html>

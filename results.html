@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados del Test - WebGazer Lab</title>
+    <link rel="stylesheet" href="css/results.css">
+    <!-- Heatmap.js desde CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="results-header">
+            <h1>📊 Resultados del Test de Usabilidad</h1>
+            <p class="subtitle">Análisis de Eye Tracking - TaskFlow</p>
+        </header>
+
+        <!-- Estado del test -->
+        <section class="test-status">
+            <div class="status-card">
+                <span class="status-label">Estado:</span>
+                <span id="testStatus" class="status-value">-</span>
+            </div>
+            <div class="status-card">
+                <span class="status-label">Duración:</span>
+                <span id="testDuration" class="status-value">-</span>
+            </div>
+            <div class="status-card">
+                <span class="status-label">Puntos registrados:</span>
+                <span id="totalPoints" class="status-value">-</span>
+            </div>
+        </section>
+
+        <!-- Visualización del heatmap -->
+        <section class="heatmap-section">
+            <div class="section-header">
+                <h2>🔥 Mapa de Calor</h2>
+                <button id="btnToggleHeatmap" class="btn-toggle">Ocultar Heatmap</button>
+            </div>
+            
+            <div class="heatmap-wrapper">
+                <!-- Captura de pantalla de la página de test -->
+                <div id="testPageScreenshot" class="screenshot-container">
+                    <iframe src="test-page.html" id="testPageFrame" scrolling="no"></iframe>
+                </div>
+                
+                <!-- Overlay del heatmap -->
+                <div id="heatmapContainer" class="heatmap-overlay"></div>
+            </div>
+        </section>
+
+        <!-- Estadísticas -->
+        <section class="stats-section">
+            <h2>📈 Estadísticas</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Coordenada Promedio</h3>
+                    <p id="avgCoords">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Muestras por segundo</h3>
+                    <p id="samplesPerSec">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Tarea completada</h3>
+                    <p id="taskStatus">-</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Zonas de mayor atención -->
+        <section class="hotspots-section">
+            <h2>🎯 Zonas de Mayor Atención</h2>
+            <div id="hotspotsList" class="hotspots-list"></div>
+        </section>
+
+        <!-- Análisis según Nielsen -->
+        <section class="analysis-section">
+            <h2>🔍 Análisis de Usabilidad</h2>
+            <div class="analysis-content">
+                <h3>Análisis Automático</h3>
+                <div id="autoAnalysis" class="auto-analysis"></div>
+                
+                <h3>Tu Análisis (Completar según heurísticas de Nielsen)</h3>
+                <textarea id="manualAnalysis" 
+                          placeholder="Escribe aquí tu análisis considerando:
+- ¿Qué zonas recibieron mayor atención?
+- ¿Existen elementos ignorados?
+- ¿La atención coincide con la jerarquía visual esperada?
+- Relación con principios de Nielsen (visibilidad, reconocimiento, minimalismo)"
+                          rows="10"></textarea>
+                <button id="btnSaveAnalysis" class="btn-save">Guardar Análisis</button>
+            </div>
+        </section>
+
+        <!-- Acciones -->
+        <section class="actions-section">
+            <button id="btnExportData" class="btn-action">📥 Exportar Datos (JSON)</button>
+            <button id="btnNewTest" class="btn-action">🔄 Realizar Nuevo Test</button>
+            <button id="btnBackToLab" class="btn-action">← Volver al Laboratorio</button>
+        </section>
+    </div>
+
+    <script type="module" src="js/results-controller.js"></script>
+</body>
+</html>

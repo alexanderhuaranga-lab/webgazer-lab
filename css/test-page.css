@@ -1,0 +1,498 @@
+/* ============================================ */
+/* BASE & RESET                               */
+/* ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden; /* Evitar scroll */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: #2c3e50;
+}
+
+/* ============================================ */
+/* HEADER                                     */
+/* ============================================ */
+
+.header {
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: 60px;
+}
+
+.container-header {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #3498db;
+}
+
+.logo-icon {
+    font-size: 1.5rem;
+}
+
+.nav {
+    display: flex;
+    gap: 25px;
+}
+
+.nav a {
+    color: #555;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+.nav a:hover {
+    color: #3498db;
+}
+
+/* ============================================ */
+/* MAIN CONTENT                               */
+/* ============================================ */
+
+.main-content {
+    margin-top: 60px;
+    height: calc(100vh - 100px);
+    overflow: hidden;
+    padding: 20px;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 0.8fr;
+    gap: 20px;
+    height: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ============================================ */
+/* SECCIÓN IZQUIERDA: INFO                    */
+/* ============================================ */
+
+.info-section {
+    background-color: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.main-title {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    line-height: 1.2;
+}
+
+.main-description {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.feature-icon {
+    font-size: 1.5rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+/* ============================================ */
+/* SECCIÓN CENTRAL: TARJETAS                  */
+/* ============================================ */
+
+.cards-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    height: 100%;
+}
+
+.card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.card-special {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.card p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    opacity: 0.9;
+}
+
+.card-btn {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+}
+
+.card-btn:hover {
+    background-color: #2980b9;
+}
+
+.card-btn-special {
+    padding: 12px 24px;
+    background-color: white;
+    color: #667eea;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.card-btn-special:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* ============================================ */
+/* SECCIÓN DERECHA: STATS                     */
+/* ============================================ */
+
+.stats-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.stat-box {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #3498db;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #777;
+    margin-top: 5px;
+}
+
+.testimonial {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-style: italic;
+    color: #555;
+}
+
+.testimonial span {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #777;
+    font-style: normal;
+}
+
+.cta-box {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 12px;
+    padding: 25px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.cta-box h4 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+/* ============================================ */
+/* BOTONES GENERALES                          */
+/* ============================================ */
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    font-weight: 500;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 2px solid #3498db;
+    color: #3498db;
+}
+
+.btn-outline:hover {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: white;
+    color: #f5576c;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.btn-secondary:hover {
+    background-color: #f5f5f5;
+}
+
+/* ============================================ */
+/* FOOTER                                     */
+/* ============================================ */
+
+.footer {
+    background-color: white;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+}
+
+.footer-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-links {
+    display: flex;
+    gap: 20px;
+}
+
+.footer-links a {
+    color: #777;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.footer-links a:hover {
+    color: #3498db;
+}
+
+.footer p {
+    font-size: 0.85rem;
+    color: #777;
+}
+
+/* ============================================ */
+/* OVERLAY DE INSTRUCCIONES                   */
+/* ============================================ */
+
+.instructions-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.instructions-overlay.hidden {
+    display: none;
+}
+
+.instructions-content {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    max-width: 500px;
+    text-align: center;
+}
+
+.instructions-content h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.task-description {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.task-note {
+    font-size: 0.9rem;
+    color: #777;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.task-time {
+    font-size: 0.95rem;
+    color: #f39c12;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+.btn-start {
+    padding: 14px 32px;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-start:hover {
+    background-color: #229954;
+    transform: translateY(-2px);
+}
+
+/* ============================================ */
+/* TIMER                                      */
+/* ============================================ */
+
+.timer {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    z-index: 999;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+/* ============================================ */
+/* BANNER DE TAREA                            */
+/* ============================================ */
+
+.task-banner {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background-color: #f39c12;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    z-index: 999;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.task-banner p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* ============================================ */
+/* RESPONSIVE                                 */
+/* ============================================ */
+
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+    }
+    
+    .cards-section {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

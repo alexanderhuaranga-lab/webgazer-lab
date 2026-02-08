@@ -1,0 +1,502 @@
+/* ============================================ */
+/* WEBGAZER LAB - LABORATORIO 5 UX/UI         */
+/* Eye Tracking con WebGazer.js               */
+/* ============================================ */
+
+/* ============================================ */
+/* 1. ESTILOS BASE Y RESET                    */
+/* ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+/* ============================================ */
+/* 2. LAYOUT PRINCIPAL                        */
+/* ============================================ */
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.main-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.content-area {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ============================================ */
+/* 3. SIDEBAR DE CÁMARA (Columna Izquierda)  */
+/* ============================================ */
+
+.camera-sidebar {
+    flex-shrink: 0;
+    width: 320px;
+}
+
+.camera-preview {
+    width: 320px;  /* Tamaño fijo, no dinámico */
+    height: 240px; /* Tamaño fijo, no dinámico */
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #2c3e50;
+    border: 3px solid #3498db;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    /* Sin transición de tamaño */
+}
+
+.camera-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #95a5a6;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.camera-placeholder p:first-child {
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+}
+
+.camera-placeholder p:last-child {
+    font-size: 0.85rem;
+}
+
+.camera-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 6px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.camera-info p {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin: 2px 0;
+}
+
+.camera-info p strong {
+    color: #2c3e50;
+}
+/* ============================================ */
+/* 4. POSICIONAMIENTO DE VIDEO WEBGAZER      */
+/* ============================================ */
+
+/* Ocultar video de WebGazer hasta que esté posicionado */
+#webgazerVideoFeed {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+/* Mostrar video cuando esté en el contenedor */
+#cameraContainer #webgazerVideoFeed {
+    opacity: 1 !important;
+}
+
+/* Overlay de detección facial (puntos verdes) */
+#webgazerFaceOverlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    pointer-events: none !important;
+}
+
+#cameraContainer #webgazerFaceOverlay {
+    opacity: 1 !important;
+}
+
+/* Recuadro de feedback facial (cuadro verde) */
+#webgazerFaceFeedbackBox {
+    position: absolute !important;
+    /* NO forzar width y height al 100% */
+    /* Dejar que WebGazer maneje su tamaño natural */
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    pointer-events: none !important;
+}
+
+#cameraContainer #webgazerFaceFeedbackBox {
+    opacity: 1 !important;
+}
+
+/* ============================================ */
+/* 5. HEADER                                  */
+/* ============================================ */
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h1 {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: #7f8c8d;
+    font-size: 0.95rem;
+}
+
+/* ============================================ */
+/* 6. ESTADO DEL SISTEMA                      */
+/* ============================================ */
+
+.status {
+    background-color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #3498db;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.status p {
+    font-size: 1rem;
+    color: #555;
+}
+
+#statusText {
+    font-weight: bold;
+    color: #3498db;
+}
+
+/* ============================================ */
+/* 7. BOTONES Y CONTROLES                     */
+/* ============================================ */
+
+.controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    min-width: 180px; /* Ancho mínimo igual para todos */
+    text-align: center;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Botón Iniciar (Azul) */
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+/* Botón Calibrar (Naranja) */
+.btn-calibrate {
+    background-color: #f39c12;
+    color: white;
+}
+
+.btn-calibrate:hover:not(:disabled) {
+    background-color: #e67e22;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(243, 156, 18, 0.3);
+}
+
+/* Botón Detener (Rojo) */
+.btn-secondary {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+}
+
+/* ============================================ */
+/* 8. ÁREA DE VISUALIZACIÓN                   */
+/* ============================================ */
+
+.visualization {
+    position: relative;
+    background-color: white;
+    min-height: 400px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+/* ============================================ */
+/* 9. DOT DE SEGUIMIENTO DE MIRADA            */
+/* ============================================ */
+
+.gaze-dot {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(231, 76, 60, 0.6);
+    border: 2px solid rgba(231, 76, 60, 0.9);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    display: none;
+    transition: opacity 0.2s ease;
+}
+
+.gaze-dot.active {
+    display: block;
+}
+
+/* ============================================ */
+/* 10. SISTEMA DE CALIBRACIÓN                 */
+/* ============================================ */
+
+.calibration-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.calibration-container.hidden {
+    display: none;
+}
+
+.calibration-instructions {
+    position: fixed;
+    bottom: 100px; /* Cambiado de top a bottom para evitar que el punto lo tape */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 30px 40px;
+    border-radius: 12px;
+    text-align: center;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    max-width: 500px;
+}
+
+.calibration-instructions h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.calibration-instructions p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.calibration-progress {
+    background-color: #ecf0f1;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #3498db;
+}
+
+.calibration-point {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-color: #3498db;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(52, 152, 219, 0.6);
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+    z-index: 10001;
+}
+
+.calibration-point:hover {
+    background-color: #2980b9;
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 0 30px rgba(52, 152, 219, 0.8);
+}
+
+.calibration-point::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+/* ============================================ */
+/* 11. RESPONSIVE DESIGN                      */
+/* ============================================ */
+
+@media (max-width: 768px) {
+    /* Layout cambia a columna */
+    .main-layout {
+        flex-direction: column;
+    }
+    
+    /* Cámara ocupa ancho completo */
+    .camera-sidebar {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .camera-preview {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    /* Ajustes generales */
+    .container {
+        padding: 15px;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    /* Botones en columna */
+    .controls {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    /* Calibración responsive */
+    .calibration-instructions {
+        top: 20px;
+        padding: 15px 25px;
+        max-width: 90%;
+    }
+    
+    .calibration-instructions h2 {
+        font-size: 1.4rem;
+    }
+}
+
+/* ============================================ */
+/* 12. SECCIÓN DE TEST (NUEVO)                */
+/* ============================================ */
+
+.test-section {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    text-align: center;
+    border: 2px solid #27ae60;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.test-info {
+    margin-bottom: 20px;
+}
+
+.test-info h3 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+}
+
+.test-info p {
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.btn-test {
+    background-color: #27ae60;
+    color: white;
+    padding: 14px 32px;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.btn-test:hover {
+    background-color: #229954;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+}
+
+.btn-test:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* ============================================ */
+/* FIN DE ESTILOS                             */
+/* ============================================ */

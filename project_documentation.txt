@@ -1,0 +1,4314 @@
+================================================================================
+DOCUMENTACIÓN DEL PROYECTO: WEBGAZER LAB
+Práctica de Eye Tracking - UX/UI Laboratory
+Universidad Internacional SEK (UISEK) Ecuador
+================================================================================
+
+Fecha de generación: 2026-02-08 00:18:40
+
+
+================================================================================
+ESTRUCTURA DEL PROYECTO
+================================================================================
+
+webgazer-lab/
+  README.md
+  index.html
+  results.html
+  script_extract_project.py
+  test-page-static.html
+  test-page.html
+  css/
+    results.css
+    styles.css
+    test-page.css
+  js/
+    calibration.js
+    gaze-tracker.js
+    heatmap-manager.js
+    main.js
+    results-controller.js
+    test-controller.js
+    ui-controls.js
+    webgazer-manager.js
+  mediapipe/
+    face_mesh/
+      README.md [MEDIAPIPE]
+      face_mesh.binarypb [MEDIAPIPE]
+      face_mesh.js [MEDIAPIPE]
+      face_mesh_solution_packed_assets.data [MEDIAPIPE]
+      face_mesh_solution_packed_assets_loader.js [MEDIAPIPE]
+      face_mesh_solution_simd_wasm_bin.data [MEDIAPIPE]
+      face_mesh_solution_simd_wasm_bin.js [MEDIAPIPE]
+      face_mesh_solution_simd_wasm_bin.wasm [MEDIAPIPE]
+      face_mesh_solution_wasm_bin.js [MEDIAPIPE]
+      face_mesh_solution_wasm_bin.wasm [MEDIAPIPE]
+      index.d.ts [MEDIAPIPE]
+      package.json [MEDIAPIPE]
+  lib/
+    webgazer.js [LIBRERÍA EXTERNA]
+
+
+================================================================================
+CONTENIDO DE ARCHIVOS
+================================================================================
+
+
+
+################################################################################
+# HTML
+################################################################################
+
+
+================================================================================
+ARCHIVO: index.html
+================================================================================
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGazer Lab - Práctica Eye Tracking</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="main-layout">
+            <!-- Columna izquierda: Cámara -->
+            <aside class="camera-sidebar">
+                <div id="cameraContainer" class="camera-preview">
+                    <div class="camera-placeholder">
+                        <p>📷</p>
+                        <p>Cámara inactiva</p>
+                    </div>
+                </div>
+                <div class="camera-info">
+                    <p><strong>Vista de cámara</strong></p>
+                    <p>Detección facial activa</p>
+                </div>
+            </aside>
+    
+            <!-- Columna derecha: Contenido principal -->
+            <div class="content-area">
+                <header>
+                    <h1>WebGazer Lab</h1>
+                    <p class="subtitle">Práctica de Eye Tracking - UX/UI Laboratory</p>
+                </header>
+    
+                <main>
+                    <!-- Estado del sistema -->
+                    <div id="status" class="status">
+                        <p>Estado: <span id="statusText">No iniciado</span></p>
+                    </div>
+    
+                    <!-- Controles básicos -->
+                    <div class="controls">
+                        <button id="btnStart" class="btn btn-primary">Iniciar WebGazer</button>
+                        <button id="btnCalibrate" class="btn btn-calibrate" disabled>Calibrar</button>
+                        <button id="btnStop" class="btn btn-secondary" disabled>Detener</button>
+                    </div>
+
+                    <!-- ✅ NUEVO: Sección de test (solo visible después de calibrar) -->
+                    <div class="test-section" id="testSection" style="display: none;">
+                        <div class="test-info">
+                            <h3>🧪 Test de Usabilidad</h3>
+                            <p>Sistema calibrado correctamente. Ahora puedes iniciar el test de eye tracking.</p>
+                        </div>
+                        <button id="btnStartTest" class="btn btn-test">Iniciar Test de Usabilidad</button>
+                    </div>
+    
+                    <!-- Área de visualización -->
+                    <div id="gazeVisualization" class="visualization">
+                        <div id="gazeDot" class="gaze-dot"></div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor de calibración (overlay fullscreen) -->
+    <div id="calibrationContainer" class="calibration-container hidden">
+        <div class="calibration-instructions">
+            <h2>Calibración</h2>
+            <p id="calibrationInstructions">Mira fijamente cada punto y haz click cuando aparezca</p>
+            <div class="calibration-progress">
+                <span id="calibrationProgress">0/9</span>
+            </div>
+        </div>
+        <div id="calibrationPoint" class="calibration-point"></div>
+    </div>
+
+    <!-- WebGazer desde archivo local -->
+    <script src="lib/webgazer.js"></script>
+    
+    <!-- Nuestros módulos -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
+
+================================================================================
+ARCHIVO: results.html
+================================================================================
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados del Test - WebGazer Lab</title>
+    <link rel="stylesheet" href="css/results.css">
+    <!-- Heatmap.js desde CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="results-header">
+            <h1>📊 Resultados del Test de Usabilidad</h1>
+            <p class="subtitle">Análisis de Eye Tracking - TaskFlow</p>
+        </header>
+
+        <!-- Estado del test -->
+        <section class="test-status">
+            <div class="status-card">
+                <span class="status-label">Estado:</span>
+                <span id="testStatus" class="status-value">-</span>
+            </div>
+            <div class="status-card">
+                <span class="status-label">Duración:</span>
+                <span id="testDuration" class="status-value">-</span>
+            </div>
+            <div class="status-card">
+                <span class="status-label">Puntos registrados:</span>
+                <span id="totalPoints" class="status-value">-</span>
+            </div>
+        </section>
+
+        <!-- Visualización del heatmap -->
+        <section class="heatmap-section">
+            <div class="section-header">
+                <h2>🔥 Mapa de Calor</h2>
+                <button id="btnToggleHeatmap" class="btn-toggle">Ocultar Heatmap</button>
+            </div>
+            
+            <div class="heatmap-wrapper">
+                <!-- Captura de pantalla de la página de test -->
+                <div id="testPageScreenshot" class="screenshot-container">
+                    <iframe src="test-page.html" id="testPageFrame" scrolling="no"></iframe>
+                </div>
+                
+                <!-- Overlay del heatmap -->
+                <div id="heatmapContainer" class="heatmap-overlay"></div>
+            </div>
+        </section>
+
+        <!-- Estadísticas -->
+        <section class="stats-section">
+            <h2>📈 Estadísticas</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Coordenada Promedio</h3>
+                    <p id="avgCoords">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Muestras por segundo</h3>
+                    <p id="samplesPerSec">-</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Tarea completada</h3>
+                    <p id="taskStatus">-</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Zonas de mayor atención -->
+        <section class="hotspots-section">
+            <h2>🎯 Zonas de Mayor Atención</h2>
+            <div id="hotspotsList" class="hotspots-list"></div>
+        </section>
+
+        <!-- Análisis según Nielsen -->
+        <section class="analysis-section">
+            <h2>🔍 Análisis de Usabilidad</h2>
+            <div class="analysis-content">
+                <h3>Análisis Automático</h3>
+                <div id="autoAnalysis" class="auto-analysis"></div>
+                
+                <h3>Tu Análisis (Completar según heurísticas de Nielsen)</h3>
+                <textarea id="manualAnalysis" 
+                          placeholder="Escribe aquí tu análisis considerando:
+- ¿Qué zonas recibieron mayor atención?
+- ¿Existen elementos ignorados?
+- ¿La atención coincide con la jerarquía visual esperada?
+- Relación con principios de Nielsen (visibilidad, reconocimiento, minimalismo)"
+                          rows="10"></textarea>
+                <button id="btnSaveAnalysis" class="btn-save">Guardar Análisis</button>
+            </div>
+        </section>
+
+        <!-- Acciones -->
+        <section class="actions-section">
+            <button id="btnExportData" class="btn-action">📥 Exportar Datos (JSON)</button>
+            <button id="btnNewTest" class="btn-action">🔄 Realizar Nuevo Test</button>
+            <button id="btnBackToLab" class="btn-action">← Volver al Laboratorio</button>
+        </section>
+    </div>
+
+    <script type="module" src="js/results-controller.js"></script>
+</body>
+</html>
+
+================================================================================
+ARCHIVO: test-page-static.html
+================================================================================
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Gestiona tus tareas de forma inteligente</title>
+    <link rel="stylesheet" href="css/test-page.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container-header">
+            <div class="logo">
+                <span class="logo-icon">✓</span>
+                <span class="logo-text">TaskFlow</span>
+            </div>
+            <nav class="nav">
+                <a href="#features">Características</a>
+                <a href="#pricing">Precios</a>
+                <a href="#about">Acerca de</a>
+                <a href="#contact">Contacto</a>
+                <a href="#help">Ayuda</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenido principal en una sola pantalla -->
+    <main class="main-content">
+        <div class="content-grid">
+            <!-- Sección izquierda: Información principal -->
+            <section class="info-section">
+                <h1 class="main-title">Organiza tus proyectos de manera efectiva</h1>
+                <p class="main-description">
+                    TaskFlow es la herramienta perfecta para equipos que buscan mejorar su productividad 
+                    y colaboración en tiempo real.
+                </p>
+                
+                <div class="features-list">
+                    <div class="feature-item">
+                        <span class="feature-icon">📋</span>
+                        <span>Gestión de tareas</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">👥</span>
+                        <span>Colaboración en equipo</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📊</span>
+                        <span>Reportes detallados</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🔔</span>
+                        <span>Notificaciones inteligentes</span>
+                    </div>
+                </div>
+
+                <!-- Botones distractores -->
+                <div class="action-buttons">
+                    <button class="btn btn-outline">Ver planes</button>
+                    <button class="btn btn-outline">Conocer más</button>
+                </div>
+            </section>
+
+            <!-- Sección central: Tarjetas de características -->
+            <section class="cards-section">
+                <div class="card">
+                    <div class="card-icon">🚀</div>
+                    <h3>Rápido y eficiente</h3>
+                    <p>Optimiza tu flujo de trabajo con herramientas inteligentes</p>
+                    <button class="card-btn">Explorar</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <h3>Seguimiento de objetivos</h3>
+                    <p>Mantén el control de tus metas y plazos importantes</p>
+                    <button class="card-btn">Saber más</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">💡</div>
+                    <h3>Ideas innovadoras</h3>
+                    <p>Captura y organiza todas tus ideas en un solo lugar</p>
+                    <button class="card-btn">Descubrir</button>
+                </div>
+
+                <div class="card card-special">
+                    <div class="card-icon">✨</div>
+                    <h3>Prueba sin costo</h3>
+                    <p>Comienza ahora y descubre todas las funcionalidades</p>
+                    <button class="card-btn-special" id="ctaTarget">Iniciar prueba</button>
+                </div>
+            </section>
+
+            <!-- Sección derecha: Stats y testimonios -->
+            <section class="stats-section">
+                <div class="stat-box">
+                    <div class="stat-number">10,000+</div>
+                    <div class="stat-label">Usuarios activos</div>
+                </div>
+                
+                <div class="stat-box">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">Satisfacción</div>
+                </div>
+                
+                <div class="testimonial">
+                    <p>"TaskFlow transformó la forma en que trabajamos"</p>
+                    <span>- María González, CEO</span>
+                </div>
+
+                <div class="cta-box">
+                    <h4>¿Listo para empezar?</h4>
+                    <button class="btn btn-secondary">Contactar ventas</button>
+                    <button class="btn btn-outline">Ver demo</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#privacy">Privacidad</a>
+                <a href="#terms">Términos</a>
+                <a href="#support">Soporte</a>
+            </div>
+            <p>&copy; 2024 TaskFlow</p>
+        </div>
+    </footer>
+
+    <!-- NO HAY SCRIPTS -->
+</body>
+</html>
+
+================================================================================
+ARCHIVO: test-page.html
+================================================================================
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Gestiona tus tareas de forma inteligente</title>
+    <link rel="stylesheet" href="css/test-page.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container-header">
+            <div class="logo">
+                <span class="logo-icon">✓</span>
+                <span class="logo-text">TaskFlow</span>
+            </div>
+            <nav class="nav">
+                <a href="#features">Características</a>
+                <a href="#pricing">Precios</a>
+                <a href="#about">Acerca de</a>
+                <a href="#contact">Contacto</a>
+                <a href="#help">Ayuda</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenido principal en una sola pantalla -->
+    <main class="main-content">
+        <div class="content-grid">
+            <!-- Sección izquierda: Información principal -->
+            <section class="info-section">
+                <h1 class="main-title">Organiza tus proyectos de manera efectiva</h1>
+                <p class="main-description">
+                    TaskFlow es la herramienta perfecta para equipos que buscan mejorar su productividad 
+                    y colaboración en tiempo real.
+                </p>
+                
+                <div class="features-list">
+                    <div class="feature-item">
+                        <span class="feature-icon">📋</span>
+                        <span>Gestión de tareas</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">👥</span>
+                        <span>Colaboración en equipo</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📊</span>
+                        <span>Reportes detallados</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🔔</span>
+                        <span>Notificaciones inteligentes</span>
+                    </div>
+                </div>
+
+                <!-- Botones distractores -->
+                <div class="action-buttons">
+                    <button class="btn btn-outline">Ver planes</button>
+                    <button class="btn btn-outline">Conocer más</button>
+                </div>
+            </section>
+
+            <!-- Sección central: Tarjetas de características -->
+            <section class="cards-section">
+                <div class="card">
+                    <div class="card-icon">🚀</div>
+                    <h3>Rápido y eficiente</h3>
+                    <p>Optimiza tu flujo de trabajo con herramientas inteligentes</p>
+                    <button class="card-btn">Explorar</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <h3>Seguimiento de objetivos</h3>
+                    <p>Mantén el control de tus metas y plazos importantes</p>
+                    <button class="card-btn">Saber más</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">💡</div>
+                    <h3>Ideas innovadoras</h3>
+                    <p>Captura y organiza todas tus ideas en un solo lugar</p>
+                    <button class="card-btn">Descubrir</button>
+                </div>
+
+                <div class="card card-special">
+                    <div class="card-icon">✨</div>
+                    <h3>Prueba sin costo</h3>
+                    <p>Comienza ahora y descubre todas las funcionalidades</p>
+                    <!-- ESTE ES EL BOTÓN OBJETIVO -->
+                    <button class="card-btn-special" id="ctaTarget">Iniciar prueba</button>
+                </div>
+            </section>
+
+            <!-- Sección derecha: Stats y testimonios -->
+            <section class="stats-section">
+                <div class="stat-box">
+                    <div class="stat-number">10,000+</div>
+                    <div class="stat-label">Usuarios activos</div>
+                </div>
+                
+                <div class="stat-box">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">Satisfacción</div>
+                </div>
+                
+                <div class="testimonial">
+                    <p>"TaskFlow transformó la forma en que trabajamos"</p>
+                    <span>- María González, CEO</span>
+                </div>
+
+                <div class="cta-box">
+                    <h4>¿Listo para empezar?</h4>
+                    <button class="btn btn-secondary">Contactar ventas</button>
+                    <button class="btn btn-outline">Ver demo</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#privacy">Privacidad</a>
+                <a href="#terms">Términos</a>
+                <a href="#support">Soporte</a>
+            </div>
+            <p>&copy; 2024 TaskFlow</p>
+        </div>
+    </footer>
+
+    <!-- Overlay de instrucciones -->
+    <div class="instructions-overlay" id="instructionsOverlay">
+        <div class="instructions-content">
+            <h2>Tarea de Usabilidad</h2>
+            <p class="task-description">
+                <strong>Tu objetivo:</strong><br>
+                Encuentra y haz clic en el botón para iniciar tu prueba gratuita de TaskFlow.
+            </p>
+            <p class="task-note">
+                Explora la interfaz y localiza la opción que te permita comenzar a usar la plataforma sin costo.
+            </p>
+            <p class="task-time">Tiempo límite: 60 segundos</p>
+            <button class="btn-start" id="btnStartTask">Iniciar Test</button>
+        </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer" id="timer" style="display: none;">
+        <span id="timerText">60s</span>
+    </div>
+
+    <!-- Banner de tarea -->
+    <div class="task-banner" id="taskBanner" style="display: none;">
+        <p><strong>TAREA:</strong> Encuentra y haz clic en el botón para iniciar tu prueba gratuita</p>
+    </div>
+
+    <!-- Controlador del test -->
+    <script type="module" src="js/test-controller.js"></script>
+</body>
+</html>
+
+
+################################################################################
+# CSS
+################################################################################
+
+
+================================================================================
+ARCHIVO: css/results.css
+================================================================================
+
+/* ============================================ */
+/* RESULTS PAGE - ANÁLISIS DE RESULTADOS     */
+/* ============================================ */
+
+/* ============================================ */
+/* BASE                                       */
+/* ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ============================================ */
+/* HEADER                                     */
+/* ============================================ */
+
+.results-header {
+    text-align: center;
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.results-header h1 {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #7f8c8d;
+    font-size: 1rem;
+}
+
+/* ============================================ */
+/* ESTADO DEL TEST                            */
+/* ============================================ */
+
+.test-status {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.status-card {
+    flex: 1;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.status-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-bottom: 8px;
+}
+
+.status-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #3498db;
+}
+
+/* ============================================ */
+/* SECCIÓN DE HEATMAP                         */
+/* ============================================ */
+
+.heatmap-section {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+}
+
+.btn-toggle {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-toggle:hover {
+    background-color: #2980b9;
+}
+
+.heatmap-wrapper {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.screenshot-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#testPageFrame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    pointer-events: none;
+}
+
+.heatmap-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* ============================================ */
+/* ESTADÍSTICAS                               */
+/* ============================================ */
+
+.stats-section {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stats-section h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #3498db;
+}
+
+.stat-card h3 {
+    font-size: 1rem;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+}
+
+.stat-card p {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* ============================================ */
+/* HOTSPOTS                                   */
+/* ============================================ */
+
+.hotspots-section {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.hotspots-section h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.hotspots-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.hotspot-item {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hotspot-rank {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #3498db;
+    width: 40px;
+}
+
+.hotspot-coords {
+    flex: 1;
+    color: #555;
+}
+
+.hotspot-percentage {
+    font-weight: 600;
+    color: #27ae60;
+}
+
+/* ============================================ */
+/* ANÁLISIS                                   */
+/* ============================================ */
+
+.analysis-section {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.analysis-section h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.analysis-content h3 {
+    font-size: 1.3rem;
+    color: #2c3e50;
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
+.auto-analysis {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    border-left: 4px solid #f39c12;
+    margin-bottom: 20px;
+}
+
+#manualAnalysis {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    margin-bottom: 15px;
+}
+
+#manualAnalysis:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.btn-save {
+    padding: 12px 30px;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    background-color: #229954;
+}
+
+/* ============================================ */
+/* ACCIONES                                   */
+/* ============================================ */
+
+.actions-section {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 12px 24px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+}
+
+/* ============================================ */
+/* RESPONSIVE                                 */
+/* ============================================ */
+
+@media (max-width: 768px) {
+    .test-status {
+        flex-direction: column;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-section {
+        flex-direction: column;
+    }
+    
+    .btn-action {
+        width: 100%;
+    }
+}
+
+================================================================================
+ARCHIVO: css/styles.css
+================================================================================
+
+/* ============================================ */
+/* WEBGAZER LAB - LABORATORIO 5 UX/UI         */
+/* Eye Tracking con WebGazer.js               */
+/* ============================================ */
+
+/* ============================================ */
+/* 1. ESTILOS BASE Y RESET                    */
+/* ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+/* ============================================ */
+/* 2. LAYOUT PRINCIPAL                        */
+/* ============================================ */
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.main-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.content-area {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ============================================ */
+/* 3. SIDEBAR DE CÁMARA (Columna Izquierda)  */
+/* ============================================ */
+
+.camera-sidebar {
+    flex-shrink: 0;
+    width: 320px;
+}
+
+.camera-preview {
+    width: 320px;  /* Tamaño fijo, no dinámico */
+    height: 240px; /* Tamaño fijo, no dinámico */
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #2c3e50;
+    border: 3px solid #3498db;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    /* Sin transición de tamaño */
+}
+
+.camera-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #95a5a6;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.camera-placeholder p:first-child {
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+}
+
+.camera-placeholder p:last-child {
+    font-size: 0.85rem;
+}
+
+.camera-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 6px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.camera-info p {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin: 2px 0;
+}
+
+.camera-info p strong {
+    color: #2c3e50;
+}
+/* ============================================ */
+/* 4. POSICIONAMIENTO DE VIDEO WEBGAZER      */
+/* ============================================ */
+
+/* Ocultar video de WebGazer hasta que esté posicionado */
+#webgazerVideoFeed {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+/* Mostrar video cuando esté en el contenedor */
+#cameraContainer #webgazerVideoFeed {
+    opacity: 1 !important;
+}
+
+/* Overlay de detección facial (puntos verdes) */
+#webgazerFaceOverlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    pointer-events: none !important;
+}
+
+#cameraContainer #webgazerFaceOverlay {
+    opacity: 1 !important;
+}
+
+/* Recuadro de feedback facial (cuadro verde) */
+#webgazerFaceFeedbackBox {
+    position: absolute !important;
+    /* NO forzar width y height al 100% */
+    /* Dejar que WebGazer maneje su tamaño natural */
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+    pointer-events: none !important;
+}
+
+#cameraContainer #webgazerFaceFeedbackBox {
+    opacity: 1 !important;
+}
+
+/* ============================================ */
+/* 5. HEADER                                  */
+/* ============================================ */
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h1 {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: #7f8c8d;
+    font-size: 0.95rem;
+}
+
+/* ============================================ */
+/* 6. ESTADO DEL SISTEMA                      */
+/* ============================================ */
+
+.status {
+    background-color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #3498db;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.status p {
+    font-size: 1rem;
+    color: #555;
+}
+
+#statusText {
+    font-weight: bold;
+    color: #3498db;
+}
+
+/* ============================================ */
+/* 7. BOTONES Y CONTROLES                     */
+/* ============================================ */
+
+.controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    min-width: 180px; /* Ancho mínimo igual para todos */
+    text-align: center;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Botón Iniciar (Azul) */
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+/* Botón Calibrar (Naranja) */
+.btn-calibrate {
+    background-color: #f39c12;
+    color: white;
+}
+
+.btn-calibrate:hover:not(:disabled) {
+    background-color: #e67e22;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(243, 156, 18, 0.3);
+}
+
+/* Botón Detener (Rojo) */
+.btn-secondary {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+}
+
+/* ============================================ */
+/* 8. ÁREA DE VISUALIZACIÓN                   */
+/* ============================================ */
+
+.visualization {
+    position: relative;
+    background-color: white;
+    min-height: 400px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+/* ============================================ */
+/* 9. DOT DE SEGUIMIENTO DE MIRADA            */
+/* ============================================ */
+
+.gaze-dot {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(231, 76, 60, 0.6);
+    border: 2px solid rgba(231, 76, 60, 0.9);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    display: none;
+    transition: opacity 0.2s ease;
+}
+
+.gaze-dot.active {
+    display: block;
+}
+
+/* ============================================ */
+/* 10. SISTEMA DE CALIBRACIÓN                 */
+/* ============================================ */
+
+.calibration-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.calibration-container.hidden {
+    display: none;
+}
+
+.calibration-instructions {
+    position: fixed;
+    bottom: 100px; /* Cambiado de top a bottom para evitar que el punto lo tape */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 30px 40px;
+    border-radius: 12px;
+    text-align: center;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    max-width: 500px;
+}
+
+.calibration-instructions h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.calibration-instructions p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.calibration-progress {
+    background-color: #ecf0f1;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #3498db;
+}
+
+.calibration-point {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-color: #3498db;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(52, 152, 219, 0.6);
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+    z-index: 10001;
+}
+
+.calibration-point:hover {
+    background-color: #2980b9;
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 0 30px rgba(52, 152, 219, 0.8);
+}
+
+.calibration-point::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+/* ============================================ */
+/* 11. RESPONSIVE DESIGN                      */
+/* ============================================ */
+
+@media (max-width: 768px) {
+    /* Layout cambia a columna */
+    .main-layout {
+        flex-direction: column;
+    }
+    
+    /* Cámara ocupa ancho completo */
+    .camera-sidebar {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .camera-preview {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    /* Ajustes generales */
+    .container {
+        padding: 15px;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    /* Botones en columna */
+    .controls {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    /* Calibración responsive */
+    .calibration-instructions {
+        top: 20px;
+        padding: 15px 25px;
+        max-width: 90%;
+    }
+    
+    .calibration-instructions h2 {
+        font-size: 1.4rem;
+    }
+}
+
+/* ============================================ */
+/* 12. SECCIÓN DE TEST (NUEVO)                */
+/* ============================================ */
+
+.test-section {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    text-align: center;
+    border: 2px solid #27ae60;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.test-info {
+    margin-bottom: 20px;
+}
+
+.test-info h3 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+}
+
+.test-info p {
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.btn-test {
+    background-color: #27ae60;
+    color: white;
+    padding: 14px 32px;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.btn-test:hover {
+    background-color: #229954;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+}
+
+.btn-test:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* ============================================ */
+/* FIN DE ESTILOS                             */
+/* ============================================ */
+
+================================================================================
+ARCHIVO: css/test-page.css
+================================================================================
+
+/* ============================================ */
+/* BASE & RESET                               */
+/* ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden; /* Evitar scroll */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: #2c3e50;
+}
+
+/* ============================================ */
+/* HEADER                                     */
+/* ============================================ */
+
+.header {
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: 60px;
+}
+
+.container-header {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #3498db;
+}
+
+.logo-icon {
+    font-size: 1.5rem;
+}
+
+.nav {
+    display: flex;
+    gap: 25px;
+}
+
+.nav a {
+    color: #555;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+.nav a:hover {
+    color: #3498db;
+}
+
+/* ============================================ */
+/* MAIN CONTENT                               */
+/* ============================================ */
+
+.main-content {
+    margin-top: 60px;
+    height: calc(100vh - 100px);
+    overflow: hidden;
+    padding: 20px;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 0.8fr;
+    gap: 20px;
+    height: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ============================================ */
+/* SECCIÓN IZQUIERDA: INFO                    */
+/* ============================================ */
+
+.info-section {
+    background-color: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.main-title {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    line-height: 1.2;
+}
+
+.main-description {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.feature-icon {
+    font-size: 1.5rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+/* ============================================ */
+/* SECCIÓN CENTRAL: TARJETAS                  */
+/* ============================================ */
+
+.cards-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    height: 100%;
+}
+
+.card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.card-special {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.card p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    opacity: 0.9;
+}
+
+.card-btn {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+}
+
+.card-btn:hover {
+    background-color: #2980b9;
+}
+
+.card-btn-special {
+    padding: 12px 24px;
+    background-color: white;
+    color: #667eea;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.card-btn-special:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* ============================================ */
+/* SECCIÓN DERECHA: STATS                     */
+/* ============================================ */
+
+.stats-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.stat-box {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #3498db;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #777;
+    margin-top: 5px;
+}
+
+.testimonial {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-style: italic;
+    color: #555;
+}
+
+.testimonial span {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #777;
+    font-style: normal;
+}
+
+.cta-box {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 12px;
+    padding: 25px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.cta-box h4 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+}
+
+/* ============================================ */
+/* BOTONES GENERALES                          */
+/* ============================================ */
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    font-weight: 500;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 2px solid #3498db;
+    color: #3498db;
+}
+
+.btn-outline:hover {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: white;
+    color: #f5576c;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.btn-secondary:hover {
+    background-color: #f5f5f5;
+}
+
+/* ============================================ */
+/* FOOTER                                     */
+/* ============================================ */
+
+.footer {
+    background-color: white;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+}
+
+.footer-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-links {
+    display: flex;
+    gap: 20px;
+}
+
+.footer-links a {
+    color: #777;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.footer-links a:hover {
+    color: #3498db;
+}
+
+.footer p {
+    font-size: 0.85rem;
+    color: #777;
+}
+
+/* ============================================ */
+/* OVERLAY DE INSTRUCCIONES                   */
+/* ============================================ */
+
+.instructions-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.instructions-overlay.hidden {
+    display: none;
+}
+
+.instructions-content {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    max-width: 500px;
+    text-align: center;
+}
+
+.instructions-content h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.task-description {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.task-note {
+    font-size: 0.9rem;
+    color: #777;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.task-time {
+    font-size: 0.95rem;
+    color: #f39c12;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+.btn-start {
+    padding: 14px 32px;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-start:hover {
+    background-color: #229954;
+    transform: translateY(-2px);
+}
+
+/* ============================================ */
+/* TIMER                                      */
+/* ============================================ */
+
+.timer {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    z-index: 999;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+/* ============================================ */
+/* BANNER DE TAREA                            */
+/* ============================================ */
+
+.task-banner {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background-color: #f39c12;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    z-index: 999;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.task-banner p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* ============================================ */
+/* RESPONSIVE                                 */
+/* ============================================ */
+
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+    }
+    
+    .cards-section {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+
+################################################################################
+# JAVASCRIPT
+################################################################################
+
+
+================================================================================
+ARCHIVO: js/calibration.js
+================================================================================
+
+// calibration.js
+// Módulo para manejar la calibración de 9 puntos
+
+class Calibration {
+    constructor() {
+        this.isCalibrating = false;
+        this.isValidating = false;
+        this.currentPoint = 0;
+        this.totalPoints = 9;
+        this.validationPoints = 5; // Puntos para validación
+        this.calibrationPoints = [];
+        this.validationData = [];
+        this.container = null;
+        this.point = null;
+        this.progressText = null;
+        
+        // Generar posiciones
+        this.generateCalibrationPoints();
+        this.generateValidationPoints();
+    }
+
+    /**
+     * Genera las posiciones de los 9 puntos de calibración
+     */
+    generateCalibrationPoints() {
+        const marginX = 10;
+        const marginY = 10;
+        
+        const positions = [
+            { x: marginX, y: marginY },
+            { x: 50, y: marginY },
+            { x: 100 - marginX, y: marginY },
+            { x: marginX, y: 50 },
+            { x: 50, y: 50 },
+            { x: 100 - marginX, y: 50 },
+            { x: marginX, y: 100 - marginY },
+            { x: 50, y: 100 - marginY },
+            { x: 100 - marginX, y: 100 - marginY }
+        ];
+        
+        this.calibrationPoints = positions;
+    }
+
+    /**
+     * Genera puntos de validación (diferentes a calibración)
+     */
+    generateValidationPoints() {
+        // Puntos intermedios entre los de calibración
+        const positions = [
+            { x: 25, y: 25 },   // Entre punto 1 y 5
+            { x: 75, y: 25 },   // Entre punto 2 y 6
+            { x: 25, y: 75 },   // Entre punto 4 y 8
+            { x: 75, y: 75 },   // Entre punto 5 y 9
+            { x: 50, y: 50 }    // Centro (para confirmar)
+        ];
+        
+        this.validationData = positions.map(pos => ({
+            position: pos,
+            actualX: 0,
+            actualY: 0,
+            predictedX: 0,
+            predictedY: 0,
+            error: 0
+        }));
+    }
+
+    /**
+     * Inicializa referencias a elementos del DOM
+     */
+    init() {
+        this.container = document.getElementById('calibrationContainer');
+        this.point = document.getElementById('calibrationPoint');
+        this.progressText = document.getElementById('calibrationProgress');
+        
+        // Event listener para clicks en el punto
+        this.point.addEventListener('click', () => {
+            this.onPointClick();
+        });
+        
+        console.log('Calibration inicializado');
+    }
+
+    /**
+     * Inicia el proceso de calibración
+     */
+    start() {
+        if (this.isCalibrating) {
+            console.log('Calibración ya en progreso');
+            return;
+        }
+        
+        this.isCalibrating = true;
+        this.isValidating = false;
+        this.currentPoint = 0;
+        
+        // Mostrar contenedor de calibración
+        this.container.classList.remove('hidden');
+        
+        // Actualizar instrucciones
+        this.updateInstructions('Mira fijamente cada punto y haz click cuando aparezca');
+        
+        // Mostrar primer punto
+        this.showPoint(this.currentPoint);
+        
+        console.log('Calibración iniciada');
+    }
+
+    /**
+     * Muestra un punto de calibración en pantalla
+     */
+    showPoint(index) {
+        if (index >= this.totalPoints) {
+            // Calibración completa, iniciar validación
+            this.startValidation();
+            return;
+        }
+        
+        const position = this.calibrationPoints[index];
+        
+        const x = (window.innerWidth * position.x) / 100;
+        const y = (window.innerHeight * position.y) / 100;
+        
+        this.point.style.left = `${x}px`;
+        this.point.style.top = `${y}px`;
+        
+        this.updateProgress();
+        
+        console.log(`Mostrando punto ${index + 1}/${this.totalPoints}`);
+    }
+
+    /**
+     * Maneja el click en un punto de calibración
+     */
+    onPointClick() {
+        if (!this.isCalibrating || this.isValidating) return;
+        
+        console.log(`Punto ${this.currentPoint + 1} clickeado`);
+        
+        this.currentPoint++;
+        
+        setTimeout(() => {
+            this.showPoint(this.currentPoint);
+        }, 300);
+    }
+
+    /**
+     * Inicia la fase de validación
+     */
+    startValidation() {
+        console.log('Iniciando validación de precisión...');
+        
+        this.isValidating = true;
+        this.currentPoint = 0;
+        
+        // Cambiar instrucciones
+        this.updateInstructions('¡Solo MIRA cada punto! No hagas click. Midiendo precisión...');
+        
+        // Cambiar estilo del punto (solo visual, no clickeable)
+        this.point.style.cursor = 'default';
+        this.point.style.backgroundColor = '#27ae60'; // Verde para validación
+        
+        // Mostrar primer punto de validación
+        this.showValidationPoint(this.currentPoint);
+    }
+
+    /**
+     * Muestra un punto de validación
+     */
+    showValidationPoint(index) {
+        if (index >= this.validationPoints) {
+            // Validación completa
+            this.finishValidation();
+            return;
+        }
+        
+        const validationItem = this.validationData[index];
+        const position = validationItem.position;
+        
+        const x = (window.innerWidth * position.x) / 100;
+        const y = (window.innerHeight * position.y) / 100;
+        
+        // Guardar posición real
+        validationItem.actualX = x;
+        validationItem.actualY = y;
+        
+        this.point.style.left = `${x}px`;
+        this.point.style.top = `${y}px`;
+        
+        // Actualizar progreso
+        if (this.progressText) {
+            this.progressText.textContent = `Validación ${index + 1}/${this.validationPoints}`;
+        }
+        
+        // Esperar 2 segundos para capturar predicción
+        setTimeout(() => {
+            this.captureValidationData(index);
+        }, 2000);
+    }
+
+    /**
+     * Captura los datos de predicción para validación
+     */
+    captureValidationData(index) {
+        // Obtener predicción actual de WebGazer
+        const prediction = webgazer.getCurrentPrediction();
+        
+        if (prediction) {
+            const validationItem = this.validationData[index];
+            validationItem.predictedX = prediction.x;
+            validationItem.predictedY = prediction.y;
+            
+            // Calcular error euclidiano
+            const dx = validationItem.actualX - validationItem.predictedX;
+            const dy = validationItem.actualY - validationItem.predictedY;
+            validationItem.error = Math.sqrt(dx * dx + dy * dy);
+            
+            console.log(`Validación ${index + 1}: Error = ${Math.round(validationItem.error)}px`);
+        } else {
+            console.warn(`No se pudo obtener predicción para punto ${index + 1}`);
+            this.validationData[index].error = -1; // Error desconocido
+        }
+        
+        // Avanzar al siguiente punto
+        this.currentPoint++;
+        this.showValidationPoint(this.currentPoint);
+    }
+
+    /**
+     * Finaliza la validación y calcula métricas
+     */
+    finishValidation() {
+        console.log('Validación completada');
+        
+        // Calcular métricas
+        const metrics = this.calculateMetrics();
+        
+        // Mostrar resultados
+        this.showResults(metrics);
+        
+        // Después de 5 segundos, cerrar
+        setTimeout(() => {
+            this.finish(metrics);
+        }, 5000);
+    }
+
+    /**
+     * Calcula las métricas de precisión
+     */
+    calculateMetrics() {
+        const validErrors = this.validationData
+            .filter(item => item.error >= 0)
+            .map(item => item.error);
+        
+        if (validErrors.length === 0) {
+            return {
+                avgErrorPx: 0,
+                avgErrorCm: 0,
+                maxErrorPx: 0,
+                minErrorPx: 0,
+                accuracy: 'No disponible'
+            };
+        }
+        
+        const avgErrorPx = validErrors.reduce((a, b) => a + b, 0) / validErrors.length;
+        
+        // Convertir a cm (asumiendo ~96 DPI y distancia estándar de 60cm)
+        // 1 px ≈ 0.026 cm en pantalla típica
+        const avgErrorCm = avgErrorPx * 0.026;
+        
+        const maxErrorPx = Math.max(...validErrors);
+        const minErrorPx = Math.min(...validErrors);
+        
+        // Clasificación de precisión
+        let accuracy = 'Excelente';
+        if (avgErrorPx > 150) accuracy = 'Pobre';
+        else if (avgErrorPx > 100) accuracy = 'Regular';
+        else if (avgErrorPx > 50) accuracy = 'Buena';
+        
+        return {
+            avgErrorPx: Math.round(avgErrorPx),
+            avgErrorCm: avgErrorCm.toFixed(2),
+            maxErrorPx: Math.round(maxErrorPx),
+            minErrorPx: Math.round(minErrorPx),
+            accuracy: accuracy
+        };
+    }
+
+    /**
+     * Muestra los resultados de validación
+     */
+    showResults(metrics) {
+        const instructionsEl = document.querySelector('.calibration-instructions h2');
+        const descriptionEl = document.querySelector('.calibration-instructions p');
+        
+        if (instructionsEl && descriptionEl) {
+            instructionsEl.textContent = '✓ Calibración Completada';
+            descriptionEl.innerHTML = `
+                <strong>Resultados de Precisión:</strong><br>
+                Error promedio: ${metrics.avgErrorPx}px (~${metrics.avgErrorCm}cm)<br>
+                Rango: ${metrics.minErrorPx}px - ${metrics.maxErrorPx}px<br>
+                Calidad: <strong>${metrics.accuracy}</strong>
+            `;
+        }
+        
+        console.log('Métricas de calibración:', metrics);
+    }
+
+    /**
+     * Actualiza las instrucciones en pantalla
+     */
+    updateInstructions(text) {
+        const instructionsEl = document.querySelector('.calibration-instructions p');
+        if (instructionsEl) {
+            instructionsEl.textContent = text;
+        }
+    }
+
+    /**
+     * Actualiza el texto de progreso
+     */
+    updateProgress() {
+        if (this.progressText) {
+            this.progressText.textContent = `${this.currentPoint}/${this.totalPoints}`;
+        }
+    }
+
+    /**
+     * Finaliza el proceso completo
+     */
+   /**
+ * Finaliza el proceso completo
+ */
+finish(metrics = null) {
+    console.log('Proceso completo finalizado');
+    
+    this.isCalibrating = false;
+    this.isValidating = false;
+    
+    // Restaurar estilo del punto
+    this.point.style.cursor = 'pointer';
+    this.point.style.backgroundColor = '#3498db';
+    
+    // NUEVO: Forzar guardado de datos de WebGazer
+    if (typeof webgazer !== 'undefined') {
+        try {
+            // Forzar guardado explícito
+            webgazer.saveDataAcrossSessions(true);
+            console.log('Datos de calibración guardados en localStorage');
+            
+            // Verificar que se guardó
+            setTimeout(() => {
+                const saved = localStorage.getItem('webgazerGlobalData');
+                console.log('Verificación de guardado:', saved ? 'ÉXITO' : 'FALLO');
+            }, 500);
+        } catch (error) {
+            console.error('Error guardando datos:', error);
+        }
+    }
+    
+    // Ocultar contenedor
+    this.container.classList.add('hidden');
+    
+    // Callback con métricas
+    if (this.onComplete) {
+        this.onComplete(metrics);
+    }
+}
+
+    /**
+     * Cancela la calibración
+     */
+    cancel() {
+        if (!this.isCalibrating) return;
+        
+        console.log('Calibración cancelada');
+        
+        this.isCalibrating = false;
+        this.isValidating = false;
+        this.container.classList.add('hidden');
+        
+        if (this.onCancel) {
+            this.onCancel();
+        }
+    }
+
+    /**
+     * Verifica si está activo (calibrando o validando)
+     */
+    isActive() {
+        return this.isCalibrating || this.isValidating;
+    }
+
+    /**
+     * Configura callback para cuando termine
+     */
+    setOnComplete(callback) {
+        this.onComplete = callback;
+    }
+
+    /**
+     * Configura callback para cuando se cancele
+     */
+    setOnCancel(callback) {
+        this.onCancel = callback;
+    }
+}
+
+// Exportar instancia única
+export const calibration = new Calibration();
+
+================================================================================
+ARCHIVO: js/gaze-tracker.js
+================================================================================
+
+// gaze-tracker.js
+// Módulo para capturar y almacenar coordenadas de la mirada
+
+class GazeTracker {
+    constructor() {
+        this.isRecording = false;
+        this.gazeData = [];
+        this.startTime = null;
+        this.recordingDuration = 60000; // 60 segundos por defecto
+    }
+
+    /**
+     * Inicia la grabación de coordenadas
+     * @param {number} duration - Duración en milisegundos (opcional)
+     */
+    startRecording(duration = 60000) {
+        if (this.isRecording) {
+            console.warn('Ya hay una grabación en progreso');
+            return;
+        }
+
+        this.isRecording = true;
+        this.gazeData = [];
+        this.startTime = Date.now();
+        this.recordingDuration = duration;
+
+        console.log(`Grabación iniciada por ${duration / 1000} segundos`);
+    }
+
+    /**
+     * Detiene la grabación de coordenadas
+     */
+    stopRecording() {
+        if (!this.isRecording) {
+            console.warn('No hay grabación activa');
+            return;
+        }
+
+        this.isRecording = false;
+        console.log(`Grabación detenida. Total de puntos: ${this.gazeData.length}`);
+        
+        return this.gazeData;
+    }
+
+    /**
+     * Registra un punto de mirada
+     * @param {number} x - Coordenada X
+     * @param {number} y - Coordenada Y
+     */
+    recordGazePoint(x, y) {
+        if (!this.isRecording) return;
+
+        const timestamp = Date.now() - this.startTime;
+        
+        // Solo grabar si está dentro del tiempo límite
+        if (timestamp <= this.recordingDuration) {
+            this.gazeData.push({
+                x: Math.round(x),
+                y: Math.round(y),
+                timestamp: timestamp
+            });
+        } else {
+            // Auto-detener si se acabó el tiempo
+            this.stopRecording();
+        }
+    }
+
+    /**
+     * Obtiene los datos grabados
+     * @returns {Array} Array de puntos {x, y, timestamp}
+     */
+    getData() {
+        return this.gazeData;
+    }
+
+    /**
+     * Limpia los datos almacenados
+     */
+    clearData() {
+        this.gazeData = [];
+        this.startTime = null;
+        console.log('Datos limpiados');
+    }
+
+    /**
+     * Verifica si está grabando
+     * @returns {boolean}
+     */
+    isActive() {
+        return this.isRecording;
+    }
+
+    /**
+     * Obtiene estadísticas básicas de los datos
+     * @returns {Object}
+     */
+    getStats() {
+        if (this.gazeData.length === 0) {
+            return {
+                totalPoints: 0,
+                duration: 0,
+                avgX: 0,
+                avgY: 0
+            };
+        }
+
+        const totalPoints = this.gazeData.length;
+        const duration = this.gazeData[this.gazeData.length - 1].timestamp;
+        
+        const sumX = this.gazeData.reduce((sum, point) => sum + point.x, 0);
+        const sumY = this.gazeData.reduce((sum, point) => sum + point.y, 0);
+        
+        return {
+            totalPoints: totalPoints,
+            duration: duration,
+            avgX: Math.round(sumX / totalPoints),
+            avgY: Math.round(sumY / totalPoints),
+            samplesPerSecond: Math.round((totalPoints / duration) * 1000)
+        };
+    }
+
+    /**
+     * Exporta los datos a JSON
+     * @returns {string}
+     */
+    exportToJSON() {
+        const data = {
+            metadata: {
+                recordedAt: new Date().toISOString(),
+                totalPoints: this.gazeData.length,
+                duration: this.recordingDuration / 1000
+            },
+            gazePoints: this.gazeData,
+            stats: this.getStats()
+        };
+        
+        return JSON.stringify(data, null, 2);
+    }
+}
+
+// Exportar instancia única
+export const gazeTracker = new GazeTracker();
+
+================================================================================
+ARCHIVO: js/heatmap-manager.js
+================================================================================
+
+// heatmap-manager.js
+// Módulo para generar y visualizar heatmaps con Heatmap.js
+
+class HeatmapManager {
+    constructor() {
+        this.heatmapInstance = null;
+        this.container = null;
+        this.isVisible = false;
+    }
+
+    /**
+     * Inicializa el heatmap
+     * @param {string} containerId - ID del contenedor donde se montará el heatmap
+     */
+    init(containerId = 'heatmapContainer') {
+        this.container = document.getElementById(containerId);
+        
+        if (!this.container) {
+            console.error(`Contenedor ${containerId} no encontrado`);
+            return false;
+        }
+
+        // Verificar si heatmap.js está cargado
+        if (typeof h337 === 'undefined') {
+            console.error('Heatmap.js no está cargado. Asegúrate de incluir el script.');
+            return false;
+        }
+
+        // Configurar heatmap
+        this.heatmapInstance = h337.create({
+            container: this.container,
+            radius: 40,
+            maxOpacity: 0.6,
+            minOpacity: 0,
+            blur: 0.75,
+            gradient: {
+                '0.0': 'blue',
+                '0.25': 'cyan',
+                '0.5': 'lime',
+                '0.75': 'yellow',
+                '1.0': 'red'
+            }
+        });
+
+        console.log('HeatmapManager inicializado');
+        return true;
+    }
+
+    /**
+     * Genera el heatmap a partir de datos de mirada
+     * @param {Array} gazeData - Array de puntos {x, y, timestamp}
+     */
+    generateHeatmap(gazeData) {
+        if (!this.heatmapInstance) {
+            console.error('Heatmap no inicializado. Llama a init() primero.');
+            return;
+        }
+
+        if (!gazeData || gazeData.length === 0) {
+            console.warn('No hay datos de mirada para generar el heatmap');
+            return;
+        }
+
+        // Transformar datos al formato de heatmap.js
+        const heatmapData = {
+            max: this.calculateMaxValue(gazeData),
+            data: this.transformGazeData(gazeData)
+        };
+
+        // Establecer datos en el heatmap
+        this.heatmapInstance.setData(heatmapData);
+        
+        console.log(`Heatmap generado con ${gazeData.length} puntos`);
+    }
+
+    /**
+     * Transforma los datos de mirada al formato de heatmap.js
+     * @param {Array} gazeData
+     * @returns {Array}
+     */
+    transformGazeData(gazeData) {
+        // Agrupar puntos cercanos para evitar ruido
+        const gridSize = 20; // Tamaño de la celda en píxeles
+        const heatmap = {};
+
+        gazeData.forEach(point => {
+            const gridX = Math.floor(point.x / gridSize) * gridSize;
+            const gridY = Math.floor(point.y / gridSize) * gridSize;
+            const key = `${gridX},${gridY}`;
+
+            if (!heatmap[key]) {
+                heatmap[key] = { x: gridX, y: gridY, value: 0 };
+            }
+            heatmap[key].value += 1;
+        });
+
+        return Object.values(heatmap);
+    }
+
+    /**
+     * Calcula el valor máximo para normalización
+     * @param {Array} gazeData
+     * @returns {number}
+     */
+    calculateMaxValue(gazeData) {
+        const gridSize = 20;
+        const counts = {};
+        
+        gazeData.forEach(point => {
+            const key = `${Math.floor(point.x / gridSize)},${Math.floor(point.y / gridSize)}`;
+            counts[key] = (counts[key] || 0) + 1;
+        });
+
+        return Math.max(...Object.values(counts));
+    }
+
+    /**
+     * Muestra el heatmap
+     */
+    show() {
+        if (this.container) {
+            this.container.style.display = 'block';
+            this.isVisible = true;
+        }
+    }
+
+    /**
+     * Oculta el heatmap
+     */
+    hide() {
+        if (this.container) {
+            this.container.style.display = 'none';
+            this.isVisible = false;
+        }
+    }
+
+    /**
+     * Alterna la visibilidad del heatmap
+     */
+    toggle() {
+        if (this.isVisible) {
+            this.hide();
+        } else {
+            this.show();
+        }
+    }
+
+    /**
+     * Limpia el heatmap
+     */
+    clear() {
+        if (this.heatmapInstance) {
+            this.heatmapInstance.setData({ max: 0, data: [] });
+        }
+    }
+
+    /**
+     * Destruye la instancia del heatmap
+     */
+    destroy() {
+        if (this.heatmapInstance) {
+            this.clear();
+            this.heatmapInstance = null;
+        }
+    }
+
+    /**
+     * Obtiene zonas de mayor atención (hotspots)
+     * @param {Array} gazeData
+     * @param {number} topN - Número de zonas a retornar
+     * @returns {Array}
+     */
+    getHotspots(gazeData, topN = 5) {
+        const transformed = this.transformGazeData(gazeData);
+        
+        // Ordenar por valor descendente
+        const sorted = transformed.sort((a, b) => b.value - a.value);
+        
+        return sorted.slice(0, topN).map((point, index) => ({
+            rank: index + 1,
+            x: point.x,
+            y: point.y,
+            fixations: point.value,
+            percentage: ((point.value / gazeData.length) * 100).toFixed(2)
+        }));
+    }
+}
+
+// Exportar instancia única
+export const heatmapManager = new HeatmapManager();
+
+================================================================================
+ARCHIVO: js/main.js
+================================================================================
+
+// main.js
+// Punto de entrada principal que conecta todos los módulos
+
+import { webGazerManager } from './webgazer-manager.js';
+import { uiControls } from './ui-controls.js';
+import { calibration } from './calibration.js';
+
+class App {
+    constructor() {
+        this.isTracking = false;
+        this.isCalibrated = false;
+    }
+
+    /**
+     * Inicializa la aplicación
+     */
+    init() {
+        console.log('Inicializando aplicación...');
+        
+        // Inicializar módulos
+        uiControls.init();
+        calibration.init();
+        
+        // Configurar callbacks de calibración
+        calibration.setOnComplete((metrics) => {
+            this.onCalibrationComplete(metrics);
+        });
+        
+        calibration.setOnCancel(() => {
+            this.onCalibrationCancel();
+        });
+        
+        // Configurar event listeners
+        this.setupEventListeners();
+        
+        console.log('Aplicación lista');
+    }
+
+    /**
+     * Configura los event listeners de los botones
+     */
+    setupEventListeners() {
+        const btnStart = document.getElementById('btnStart');
+        const btnCalibrate = document.getElementById('btnCalibrate');
+        const btnStop = document.getElementById('btnStop');
+
+        // Botón Iniciar
+        btnStart.addEventListener('click', () => {
+            this.handleStart();
+        });
+
+        // Botón Calibrar
+        btnCalibrate.addEventListener('click', () => {
+            this.handleCalibrate();
+        });
+
+        // Botón Detener
+        btnStop.addEventListener('click', () => {
+            this.handleStop();
+        });
+    }
+
+    /**
+     * Maneja el evento de iniciar WebGazer
+     */
+    async handleStart() {
+        try {
+            uiControls.updateStatus('Iniciando WebGazer...', '#f39c12');
+            
+            // Iniciar WebGazer
+            const success = await webGazerManager.start();
+            
+            if (success) {
+                // Configurar el listener de mirada
+                this.setupGazeTracking();
+                
+                // Actualizar UI
+                uiControls.updateButtons(true, false);
+                uiControls.showSuccess('WebGazer activo - Presiona "Calibrar" para mejorar la precisión');
+                uiControls.showGazeDot();
+                
+                this.isTracking = true;
+            } else {
+                uiControls.showError('No se pudo iniciar WebGazer');
+            }
+            
+        } catch (error) {
+            console.error('Error al iniciar:', error);
+            uiControls.showError('Error al acceder a la cámara');
+        }
+    }
+
+    /**
+     * Maneja el evento de calibrar
+     */
+    handleCalibrate() {
+        if (!this.isTracking) {
+            uiControls.showWarning('Inicia WebGazer primero');
+            return;
+        }
+
+        try {
+            // Actualizar estado
+            uiControls.updateStatus('Calibrando... Mira cada punto y haz click', '#f39c12');
+            uiControls.updateButtons(true, true); // Deshabilitar calibrar durante el proceso
+            
+            // Iniciar calibración
+            calibration.start();
+            
+            console.log('Proceso de calibración iniciado');
+            
+        } catch (error) {
+            console.error('Error al iniciar calibración:', error);
+            uiControls.showError('Error al iniciar calibración');
+            uiControls.updateButtons(true, false);
+        }
+    }
+
+    /**
+     * Maneja el evento de detener WebGazer
+     */
+    handleStop() {
+        try {
+            // Si está calibrando, cancelar primero
+            if (calibration.isActive()) {
+                calibration.cancel();
+            }
+            
+            // Detener WebGazer
+            webGazerManager.stop();
+            
+            // Ocultar sección de test
+            this.hideTestSection();
+            
+            // Actualizar UI
+            uiControls.updateButtons(false, false);
+            uiControls.updateStatus('Detenido', '#95a5a6');
+            uiControls.hideGazeDot();
+            
+            this.isTracking = false;
+            this.isCalibrated = false;
+            
+            console.log('WebGazer detenido por el usuario');
+            
+        } catch (error) {
+            console.error('Error al detener:', error);
+            uiControls.showError('Error al detener WebGazer');
+        }
+    }
+
+    /**
+     * Configura el tracking de la mirada
+     */
+    setupGazeTracking() {
+        webGazerManager.setGazeListener((data, elapsedTime) => {
+            if (!this.isTracking) return;
+            
+            // No actualizar dot durante calibración
+            if (calibration.isActive()) return;
+            
+            // Obtener coordenadas
+            const x = data.x;
+            const y = data.y;
+            
+            // Actualizar posición del dot
+            uiControls.updateGazeDotPosition(x, y);
+            
+            // Log cada 2 segundos (opcional, para debug)
+            if (Math.floor(elapsedTime) % 2000 === 0) {
+                console.log(`Mirada en: (${Math.round(x)}, ${Math.round(y)})`);
+            }
+        });
+    }
+
+    /**
+     * Callback cuando la calibración se completa
+     */
+    onCalibrationComplete(metrics) {
+        console.log('Calibración completada exitosamente');
+        
+        this.isCalibrated = true;
+        
+        // Actualizar UI
+        uiControls.showSuccess('Calibración completada - El tracking debería ser más preciso');
+        uiControls.updateButtons(true, false);
+        
+        // ✅ NUEVO: Mostrar sección de test
+        this.showTestSection(metrics);
+        
+        // Pequeño delay para que el usuario lea el mensaje
+        setTimeout(() => {
+            uiControls.updateStatus('WebGazer activo y calibrado', '#27ae60');
+        }, 3000);
+    }
+
+    /**
+     * Callback cuando la calibración se cancela
+     */
+    onCalibrationCancel() {
+        console.log('Calibración cancelada');
+        
+        // Actualizar UI
+        uiControls.updateStatus('Calibración cancelada', '#f39c12');
+        uiControls.updateButtons(true, false);
+    }
+
+    /**
+     * ✅ NUEVO: Muestra la sección de test después de calibrar
+     * @param {Object} metrics - Métricas de calibración
+     */
+    showTestSection(metrics) {
+        const testSection = document.getElementById('testSection');
+        const btnStartTest = document.getElementById('btnStartTest');
+        
+        if (testSection) {
+            testSection.style.display = 'block';
+            
+            // Agregar info de precisión si está disponible
+            if (metrics) {
+                const testInfo = testSection.querySelector('.test-info p');
+                if (testInfo) {
+                    testInfo.textContent = `Sistema calibrado con precisión de ${metrics.avgErrorPx}px. Listo para el test.`;
+                }
+            }
+        }
+        
+        // Event listener para el botón de test (solo una vez)
+        if (btnStartTest && !btnStartTest.dataset.listenerAttached) {
+            btnStartTest.addEventListener('click', () => {
+                this.handleStartTest();
+            });
+            btnStartTest.dataset.listenerAttached = 'true';
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Oculta la sección de test
+     */
+    hideTestSection() {
+        const testSection = document.getElementById('testSection');
+        if (testSection) {
+            testSection.style.display = 'none';
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Maneja el inicio del test de usabilidad
+     */
+    /**
+ * Maneja el inicio del test de usabilidad
+ */
+handleStartTest() {
+    console.log('Iniciando test de usabilidad...');
+    
+    // Pausar el dot de seguimiento durante el test
+    uiControls.hideGazeDot();
+    
+    // Abrir página de test con parámetro de calibración
+    const testWindow = window.open('test-page.html?calibrated=true', 'WebGazerTest', 'width=1200,height=800');
+    
+    if (testWindow) {
+        uiControls.updateStatus('Test iniciado en nueva ventana', '#27ae60');
+    } else {
+        uiControls.showError('No se pudo abrir la ventana del test. Verifica que los pop-ups estén habilitados.');
+    }
+}
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    const app = new App();
+    app.init();
+});
+
+================================================================================
+ARCHIVO: js/results-controller.js
+================================================================================
+
+// results-controller.js
+// Controlador para mostrar resultados del test
+
+class ResultsController {
+    constructor() {
+        this.testResults = null;
+    }
+
+    /**
+     * Inicializa el controlador de resultados
+     */
+    init() {
+        console.log('ResultsController inicializado');
+        
+        // Cargar datos del test
+        this.loadTestData();
+        
+        // Mostrar resultados
+        if (this.testResults) {
+            this.displayResults();
+            this.setupEventListeners();
+        } else {
+            this.showError();
+        }
+    }
+
+    /**
+     * Carga los datos del test desde sessionStorage
+     */
+    loadTestData() {
+        try {
+            const data = sessionStorage.getItem('testResults');
+            if (data) {
+                this.testResults = JSON.parse(data);
+                console.log('Datos cargados:', this.testResults);
+            } else {
+                console.error('No se encontraron datos del test');
+            }
+        } catch (error) {
+            console.error('Error al cargar datos:', error);
+        }
+    }
+
+    /**
+     * Muestra los resultados en la página
+     */
+    displayResults() {
+        const { reason, details, taskCompleted, gazeData, stats } = this.testResults;
+        
+        // Estado del test
+        const statusEl = document.getElementById('testStatus');
+        if (statusEl) {
+            if (reason === 'completed') {
+                statusEl.textContent = 'Completado';
+                statusEl.style.color = '#27ae60';
+            } else {
+                statusEl.textContent = 'Tiempo agotado';
+                statusEl.style.color = '#e74c3c';
+            }
+        }
+        
+        // Duración
+        const durationEl = document.getElementById('testDuration');
+        if (durationEl && stats) {
+            const seconds = Math.round(stats.duration / 1000);
+            durationEl.textContent = `${seconds}s`;
+        }
+        
+        // Total de puntos
+        const pointsEl = document.getElementById('totalPoints');
+        if (pointsEl && stats) {
+            pointsEl.textContent = stats.totalPoints;
+        }
+        
+        // Coordenada promedio
+        const avgCoordsEl = document.getElementById('avgCoords');
+        if (avgCoordsEl && stats) {
+            avgCoordsEl.textContent = `(${Math.round(stats.avgX)}, ${Math.round(stats.avgY)})`;
+        }
+        
+        // Muestras por segundo
+        const samplesEl = document.getElementById('samplesPerSec');
+        if (samplesEl && stats) {
+            samplesEl.textContent = `${Math.round(stats.samplesPerSecond)} puntos/s`;
+        }
+        
+        // Tarea completada
+        const taskStatusEl = document.getElementById('taskStatus');
+        if (taskStatusEl) {
+            if (taskCompleted) {
+                taskStatusEl.textContent = `Sí - ${details}`;
+                taskStatusEl.style.color = '#27ae60';
+            } else {
+                taskStatusEl.textContent = 'No completada';
+                taskStatusEl.style.color = '#e74c3c';
+            }
+        }
+        
+        // Análisis automático
+        this.generateAutoAnalysis();
+        
+        // Mostrar hotspots
+        this.displayHotspots();
+        
+        // Cargar página de test en iframe
+        this.loadTestPageInIframe();
+        
+        // Dibujar heatmap encima (con delay para que cargue el iframe)
+        setTimeout(() => {
+            this.drawSimpleHeatmap();
+        }, 500);
+        
+        console.log('Resultados mostrados correctamente');
+    }
+
+    /**
+     * Genera análisis automático básico
+     */
+    generateAutoAnalysis() {
+        const autoAnalysisEl = document.getElementById('autoAnalysis');
+        if (!autoAnalysisEl) return;
+        
+        const { taskCompleted, stats, gazeData } = this.testResults;
+        
+        let analysis = '';
+        
+        // Análisis de completitud
+        if (taskCompleted) {
+            analysis += '<p><strong>Tarea completada exitosamente.</strong> El usuario logró identificar y hacer clic en el CTA principal.</p>';
+        } else {
+            analysis += '<p><strong>Tarea no completada.</strong> El usuario no logró encontrar el botón objetivo en el tiempo establecido.</p>';
+        }
+        
+        // Análisis de actividad
+        if (stats && stats.totalPoints > 0) {
+            const activity = stats.samplesPerSecond;
+            if (activity > 20) {
+                analysis += '<p>Alta actividad de exploración visual detectada.</p>';
+            } else if (activity > 10) {
+                analysis += '<p>Actividad de exploración moderada.</p>';
+            } else {
+                analysis += '<p>Baja actividad de exploración visual.</p>';
+            }
+        }
+        
+        // Análisis de tiempo
+        if (stats && stats.duration) {
+            const seconds = Math.round(stats.duration / 1000);
+            if (taskCompleted && seconds < 15) {
+                analysis += '<p>El usuario encontró el objetivo rápidamente, indicando buena visibilidad del CTA.</p>';
+            } else if (taskCompleted && seconds > 30) {
+                analysis += '<p>El usuario tardó en encontrar el objetivo, sugiriendo que la jerarquía visual podría mejorarse.</p>';
+            }
+        }
+        
+        // Método de tracking
+        if (this.testResults.trackingMethod === 'mouse') {
+            analysis += '<p><em>Nota: Los datos fueron capturados mediante mouse tracking como aproximación a eye tracking.</em></p>';
+        }
+        
+        autoAnalysisEl.innerHTML = analysis;
+    }
+
+    /**
+     * Genera y muestra las zonas de mayor atención
+     */
+    displayHotspots() {
+        const hotspotsList = document.getElementById('hotspotsList');
+        if (!hotspotsList) return;
+        
+        const { gazeData } = this.testResults;
+        if (!gazeData || gazeData.length === 0) {
+            hotspotsList.innerHTML = '<p>No hay suficientes datos para calcular zonas de atención.</p>';
+            return;
+        }
+        
+        // Calcular hotspots (zonas más visitadas)
+        const hotspots = this.calculateHotspots(gazeData);
+        
+        // Mostrar top 5
+        hotspotsList.innerHTML = '';
+        hotspots.slice(0, 5).forEach((hotspot, index) => {
+            const item = document.createElement('div');
+            item.className = 'hotspot-item';
+            item.innerHTML = `
+                <div class="hotspot-rank">${index + 1}</div>
+                <div class="hotspot-coords">
+                    Coordenadas: (${hotspot.x}, ${hotspot.y})
+                </div>
+                <div class="hotspot-percentage">
+                    ${hotspot.percentage}% de atención
+                </div>
+            `;
+            hotspotsList.appendChild(item);
+        });
+    }
+
+    /**
+     * Calcula las zonas de mayor atención
+     */
+    calculateHotspots(gazeData) {
+        const gridSize = 100; // Dividir pantalla en cuadrículas de 100px
+        const grid = {};
+        
+        // Agrupar puntos en cuadrícula
+        gazeData.forEach(point => {
+            const gridX = Math.floor(point.x / gridSize) * gridSize;
+            const gridY = Math.floor(point.y / gridSize) * gridSize;
+            const key = `${gridX},${gridY}`;
+            
+            if (!grid[key]) {
+                grid[key] = { x: gridX, y: gridY, count: 0 };
+            }
+            grid[key].count++;
+        });
+        
+        // Convertir a array y ordenar
+        const hotspots = Object.values(grid)
+            .map(cell => ({
+                x: cell.x,
+                y: cell.y,
+                count: cell.count,
+                percentage: ((cell.count / gazeData.length) * 100).toFixed(1)
+            }))
+            .sort((a, b) => b.count - a.count);
+        
+        return hotspots;
+    }
+
+    /**
+     * Carga test-page.html en el iframe
+     */
+    loadTestPageInIframe() {
+        const iframe = document.getElementById('testPageFrame');
+        if (iframe) {
+            iframe.src = 'test-page-static.html'; // Cambio: usar versión estática
+            iframe.style.display = 'block';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.pointerEvents = 'none'; // Evitar interacción con el iframe
+            
+            console.log('test-page-static.html cargado en iframe');
+        }
+    }
+
+    /**
+     * Dibuja un mapa de calor simple
+     */
+    drawSimpleHeatmap() {
+        const container = document.querySelector('.heatmap-wrapper');
+        if (!container) return;
+        
+        const { gazeData } = this.testResults;
+        if (!gazeData || gazeData.length === 0) return;
+        
+        // Crear canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = container.offsetWidth || 1200;
+        canvas.height = container.offsetHeight || 600;
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.zIndex = '10';
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Dibujar puntos con gradiente radial
+        gazeData.forEach(point => {
+            const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 30);
+            gradient.addColorStop(0, 'rgba(255, 0, 0, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(point.x - 30, point.y - 30, 60, 60);
+        });
+        
+        // Agregar al contenedor
+        const heatmapOverlay = document.getElementById('heatmapContainer');
+        if (heatmapOverlay) {
+            heatmapOverlay.innerHTML = '';
+            heatmapOverlay.appendChild(canvas);
+        }
+        
+        console.log(`Heatmap dibujado con ${gazeData.length} puntos`);
+    }
+
+    /**
+     * Configura los event listeners
+     */
+    setupEventListeners() {
+        // Botón exportar datos
+        const btnExport = document.getElementById('btnExportData');
+        if (btnExport) {
+            btnExport.addEventListener('click', () => {
+                this.exportData();
+            });
+        }
+        
+        // Botón nuevo test
+        const btnNewTest = document.getElementById('btnNewTest');
+        if (btnNewTest) {
+            btnNewTest.addEventListener('click', () => {
+                sessionStorage.removeItem('testResults');
+                window.location.href = 'index.html';
+            });
+        }
+        
+        // Botón volver al lab
+        const btnBackToLab = document.getElementById('btnBackToLab');
+        if (btnBackToLab) {
+            btnBackToLab.addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
+        }
+        
+        // Botón guardar análisis
+        const btnSaveAnalysis = document.getElementById('btnSaveAnalysis');
+        if (btnSaveAnalysis) {
+            btnSaveAnalysis.addEventListener('click', () => {
+                this.saveAnalysis();
+            });
+        }
+        
+        // Botón toggle heatmap
+        const btnToggleHeatmap = document.getElementById('btnToggleHeatmap');
+        if (btnToggleHeatmap) {
+            btnToggleHeatmap.addEventListener('click', () => {
+                this.toggleHeatmap();
+            });
+        }
+    }
+
+    /**
+     * Alterna visibilidad del heatmap
+     */
+    toggleHeatmap() {
+        const heatmapContainer = document.getElementById('heatmapContainer');
+        const btnToggle = document.getElementById('btnToggleHeatmap');
+        
+        if (!heatmapContainer || !btnToggle) return;
+        
+        if (heatmapContainer.style.display === 'none') {
+            heatmapContainer.style.display = 'block';
+            btnToggle.textContent = 'Ocultar Heatmap';
+        } else {
+            heatmapContainer.style.display = 'none';
+            btnToggle.textContent = 'Mostrar Heatmap';
+        }
+    }
+
+    /**
+     * Exporta los datos a JSON
+     */
+    exportData() {
+        const dataStr = JSON.stringify(this.testResults, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `test-results-${new Date().getTime()}.json`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        
+        console.log('Datos exportados');
+        alert('Datos exportados exitosamente como JSON');
+    }
+
+    /**
+     * Guarda el análisis manual
+     */
+    saveAnalysis() {
+        const textarea = document.getElementById('manualAnalysis');
+        if (!textarea) return;
+        
+        const analysis = textarea.value;
+        
+        if (!analysis.trim()) {
+            alert('Por favor, escribe tu análisis antes de guardar.');
+            return;
+        }
+        
+        // Guardar en el objeto de resultados
+        this.testResults.manualAnalysis = analysis;
+        this.testResults.analysisSavedAt = new Date().toISOString();
+        
+        // Actualizar sessionStorage
+        sessionStorage.setItem('testResults', JSON.stringify(this.testResults));
+        
+        alert('Análisis guardado correctamente. Puedes exportar los datos completos usando el botón "Exportar Datos (JSON)".');
+        
+        console.log('Análisis guardado');
+    }
+
+    /**
+     * Muestra error si no hay datos
+     */
+    showError() {
+        const container = document.querySelector('.container');
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 100px 20px;">
+                    <h2>Error</h2>
+                    <p style="color: #e74c3c; margin: 20px 0;">
+                        Por favor, inicia el test desde el laboratorio después de calibrar.
+                    </p>
+                    <button onclick="window.location.href='index.html'" 
+                            style="padding: 12px 24px; background: #3498db; color: white; 
+                                   border: none; border-radius: 6px; cursor: pointer;">
+                        Volver al Laboratorio
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    const controller = new ResultsController();
+    controller.init();
+});
+
+================================================================================
+ARCHIVO: js/test-controller.js
+================================================================================
+
+// test-controller.js
+// Controlador del flujo del test de usabilidad
+// Usa mouse tracking como alternativa a eye tracking
+
+import { gazeTracker } from './gaze-tracker.js';
+
+class TestController {
+    constructor() {
+        this.isTestRunning = false;
+        this.testDuration = 60000; // 60 segundos
+        this.timerInterval = null;
+        this.taskCompleted = false;
+        this.ctaListenersConfigured = false;
+    }
+
+    /**
+     * Inicializa el controlador del test
+     */
+    async init() {
+        console.log('TestController inicializado (modo mouse tracking)');
+        
+        // Verificar parámetro URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const isCalibrated = urlParams.get('calibrated') === 'true';
+        
+        if (!isCalibrated) {
+            this.showError('Por favor, inicia el test desde el laboratorio después de calibrar.');
+            return;
+        }
+        
+        console.log('Acceso autorizado, preparando test...');
+        
+        // Event listeners
+        this.setupEventListeners();
+    }
+
+    /**
+     * Configura los event listeners
+     */
+    setupEventListeners() {
+        const btnStartTask = document.getElementById('btnStartTask');
+
+        if (btnStartTask) {
+            btnStartTask.addEventListener('click', () => {
+                this.startTest();
+            });
+        }
+    }
+
+    /**
+     * Configura el listener del botón objetivo
+     */
+    setupCTAListeners() {
+        if (this.ctaListenersConfigured) {
+            console.log('CTA ya configurado, saltando...');
+            return;
+        }
+
+        // EL ÚNICO BOTÓN OBJETIVO: "Iniciar prueba"
+        const ctaTarget = document.getElementById('ctaTarget');
+
+        if (ctaTarget) {
+            ctaTarget.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Click en botón objetivo detectado');
+                this.completeTask('Botón objetivo - Iniciar prueba');
+            }, { once: true });
+        }
+        
+        this.ctaListenersConfigured = true;
+        console.log('Botón objetivo configurado correctamente');
+    }
+
+    /**
+     * Inicia el test de usabilidad
+     */
+    startTest() {
+        if (this.isTestRunning) {
+            console.log('Test ya está en ejecución');
+            return;
+        }
+
+        console.log('Iniciando test de usabilidad (mouse tracking)...');
+        
+        this.isTestRunning = true;
+        this.taskCompleted = false;
+        
+        // Ocultar overlay de instrucciones
+        const overlay = document.getElementById('instructionsOverlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+        }
+        
+        // Mostrar timer
+        const timer = document.getElementById('timer');
+        if (timer) {
+            timer.style.display = 'block';
+        }
+        
+        // Mostrar banner de tarea
+        const taskBanner = document.getElementById('taskBanner');
+        if (taskBanner) {
+            taskBanner.style.display = 'block';
+        }
+        
+        // Iniciar grabación de coordenadas
+        gazeTracker.startRecording(this.testDuration);
+        
+        // Configurar captura de mouse
+        this.setupMouseTracking();
+        
+        // Iniciar countdown
+        this.startTimer();
+        
+        // Configurar botón objetivo
+        this.setupCTAListeners();
+    }
+
+    /**
+     * Configura el tracking del mouse
+     */
+    setupMouseTracking() {
+        this.mouseTrackHandler = (event) => {
+            if (this.isTestRunning) {
+                gazeTracker.recordGazePoint(event.clientX, event.clientY);
+            }
+        };
+        
+        document.addEventListener('mousemove', this.mouseTrackHandler);
+        console.log('Mouse tracking activado');
+    }
+
+    /**
+     * Inicia el timer visual
+     */
+    startTimer() {
+        let secondsLeft = this.testDuration / 1000;
+        const timerText = document.getElementById('timerText');
+        
+        this.timerInterval = setInterval(() => {
+            secondsLeft--;
+            
+            if (timerText) {
+                timerText.textContent = `${secondsLeft}s`;
+                
+                if (secondsLeft <= 10) {
+                    timerText.style.color = '#e74c3c';
+                }
+            }
+            
+            if (secondsLeft <= 0) {
+                this.endTest('timeout');
+            }
+        }, 1000);
+    }
+
+    /**
+     * Marca la tarea como completada
+     */
+    completeTask(buttonClicked) {
+        if (!this.isTestRunning) {
+            console.log('Test no está corriendo, ignorando click');
+            return;
+        }
+        
+        if (this.taskCompleted) {
+            console.log('Tarea ya completada, ignorando click duplicado');
+            return;
+        }
+        
+        console.log(`Tarea completada: ${buttonClicked}`);
+        this.taskCompleted = true;
+        
+        this.endTest('completed', buttonClicked);
+    }
+
+    /**
+     * Finaliza el test
+     */
+    endTest(reason, details = '') {
+        if (!this.isTestRunning) {
+            console.log('Test ya fue finalizado');
+            return;
+        }
+        
+        console.log(`Test finalizado: ${reason}`);
+        
+        this.isTestRunning = false;
+        
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        
+        if (this.mouseTrackHandler) {
+            document.removeEventListener('mousemove', this.mouseTrackHandler);
+            this.mouseTrackHandler = null;
+        }
+        
+        const gazeData = gazeTracker.stopRecording();
+        
+        console.log(`Datos capturados: ${gazeData.length} puntos`);
+        
+        const testResults = {
+            reason: reason,
+            details: details,
+            taskCompleted: this.taskCompleted,
+            gazeData: gazeData,
+            stats: gazeTracker.getStats(),
+            trackingMethod: 'mouse',
+            timestamp: new Date().toISOString()
+        };
+        
+        sessionStorage.setItem('testResults', JSON.stringify(testResults));
+        
+        console.log('Resultados guardados en sessionStorage');
+        
+        setTimeout(() => {
+            window.location.href = 'results.html';
+        }, 1000);
+    }
+
+    /**
+     * Muestra un error al usuario
+     */
+    showError(message) {
+        const overlay = document.getElementById('instructionsOverlay');
+        if (overlay) {
+            const content = overlay.querySelector('.instructions-content');
+            if (content) {
+                content.innerHTML = `
+                    <h2>Error</h2>
+                    <p style="color: #e74c3c; margin-bottom: 20px;">${message}</p>
+                    <button class="btn-start" onclick="window.close()">Cerrar</button>
+                `;
+            }
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const controller = new TestController();
+    controller.init();
+});
+
+================================================================================
+ARCHIVO: js/ui-controls.js
+================================================================================
+
+// ui-controls.js
+// Módulo para manejar la interfaz de usuario y controles
+
+class UIControls {
+    constructor() {
+        this.btnStart = null;
+        this.btnCalibrate = null;
+        this.btnStop = null;
+        this.statusText = null;
+        this.gazeDot = null;
+    }
+
+    /**
+     * Inicializa referencias a elementos del DOM
+     */
+    init() {
+        // Obtener referencias a elementos
+        this.btnStart = document.getElementById('btnStart');
+        this.btnCalibrate = document.getElementById('btnCalibrate');
+        this.btnStop = document.getElementById('btnStop');
+        this.statusText = document.getElementById('statusText');
+        this.gazeDot = document.getElementById('gazeDot');
+
+        console.log('UIControls inicializado');
+    }
+
+    /**
+     * Actualiza el texto de estado
+     * @param {string} text - Texto del estado
+     * @param {string} color - Color del texto (opcional)
+     */
+    updateStatus(text, color = '#3498db') {
+        if (this.statusText) {
+            this.statusText.textContent = text;
+            this.statusText.style.color = color;
+        }
+    }
+
+    /**
+     * Actualiza el estado de los botones
+     * @param {boolean} isRunning - Si WebGazer está corriendo
+     * @param {boolean} isCalibrating - Si está en proceso de calibración
+     */
+    updateButtons(isRunning, isCalibrating = false) {
+        if (this.btnStart && this.btnCalibrate && this.btnStop) {
+            // Botón Iniciar: deshabilitado si está corriendo
+            this.btnStart.disabled = isRunning;
+            
+            // Botón Calibrar: habilitado solo si está corriendo y NO calibrando
+            this.btnCalibrate.disabled = !isRunning || isCalibrating;
+            
+            // Botón Detener: habilitado solo si está corriendo
+            this.btnStop.disabled = !isRunning;
+        }
+    }
+
+    /**
+     * Muestra el dot de seguimiento de mirada
+     */
+    showGazeDot() {
+        if (this.gazeDot) {
+            this.gazeDot.classList.add('active');
+        }
+    }
+
+    /**
+     * Oculta el dot de seguimiento de mirada
+     */
+    hideGazeDot() {
+        if (this.gazeDot) {
+            this.gazeDot.classList.remove('active');
+        }
+    }
+
+    /**
+     * Actualiza la posición del dot de seguimiento
+     * @param {number} x - Coordenada X
+     * @param {number} y - Coordenada Y
+     */
+    updateGazeDotPosition(x, y) {
+        if (this.gazeDot) {
+            this.gazeDot.style.left = `${x}px`;
+            this.gazeDot.style.top = `${y}px`;
+        }
+    }
+
+    /**
+     * Muestra un mensaje de error
+     * @param {string} message - Mensaje de error
+     */
+    showError(message) {
+        this.updateStatus(`Error: ${message}`, '#e74c3c');
+    }
+
+    /**
+     * Muestra un mensaje de éxito
+     * @param {string} message - Mensaje de éxito
+     */
+    showSuccess(message) {
+        this.updateStatus(message, '#27ae60');
+    }
+
+    /**
+     * Muestra un mensaje de advertencia
+     * @param {string} message - Mensaje de advertencia
+     */
+    showWarning(message) {
+        this.updateStatus(message, '#f39c12');
+    }
+}
+
+// Exportar instancia única
+export const uiControls = new UIControls();
+
+================================================================================
+ARCHIVO: js/webgazer-manager.js
+================================================================================
+
+// webgazer-manager.js
+// Módulo para manejar la API de WebGazer
+
+class WebGazerManager {
+    constructor() {
+        this.isInitialized = false;
+        this.isRunning = false;
+        this.gazeListener = null;
+    }
+
+    /**
+     * Inicializa WebGazer con configuración básica
+     */
+    async init() {
+        try {
+            webgazer.params.showVideo = true;
+            webgazer.params.showFaceOverlay = true;
+            webgazer.params.showFaceFeedbackBox = true;
+            
+            webgazer.setRegression('ridge');
+            webgazer.setTracker('TFFacemesh');
+            
+            // CRÍTICO: Habilitar guardado automático
+            webgazer.saveDataAcrossSessions(true);
+            
+            this.isInitialized = true;
+            console.log('WebGazer inicializado correctamente');
+            console.log('saveDataAcrossSessions:', true);
+            
+            return true;
+        } catch (error) {
+            console.error('Error al inicializar WebGazer:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Inicia la recolección de datos y predicciones
+     */
+    async start() {
+        if (!this.isInitialized) {
+            await this.init();
+        }
+
+        try {
+            await webgazer.begin();
+            this.isRunning = true;
+            
+            // Mover video al contenedor (tiempo reducido)
+            this.moveVideoToContainer();
+            
+            console.log('WebGazer iniciado');
+            
+            return true;
+        } catch (error) {
+            console.error('Error al iniciar WebGazer:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Mueve el video de WebGazer al contenedor personalizado
+     */
+    moveVideoToContainer() {
+        // Intentar mover inmediatamente
+        const attemptMove = () => {
+            const videoFeed = document.getElementById('webgazerVideoFeed');
+            const faceOverlay = document.getElementById('webgazerFaceOverlay');
+            const faceFeedbackBox = document.getElementById('webgazerFaceFeedbackBox');
+            const cameraContainer = document.getElementById('cameraContainer');
+            
+            if (videoFeed && cameraContainer) {
+                // Ocultar placeholder
+                const placeholder = cameraContainer.querySelector('.camera-placeholder');
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+                
+                // Mover elementos al contenedor
+                cameraContainer.appendChild(videoFeed);
+                
+                if (faceOverlay) {
+                    cameraContainer.appendChild(faceOverlay);
+                }
+                
+                if (faceFeedbackBox) {
+                    cameraContainer.appendChild(faceFeedbackBox);
+                }
+                
+                console.log('Video movido al contenedor');
+                return true;
+            }
+            return false;
+        };
+        
+        // Intentar varias veces con delays cortos
+        setTimeout(() => {
+            if (!attemptMove()) {
+                setTimeout(attemptMove, 100);
+            }
+        }, 200);
+    }
+
+    /**
+     * Detiene WebGazer completamente
+     */
+    stop() {
+        if (this.isRunning) {
+            webgazer.end();
+            
+            this.isRunning = false;
+            this.isInitialized = false;
+            
+            // Limpiar elementos del DOM
+            this.cleanupVideoElements();
+            
+            console.log('WebGazer detenido');
+        }
+    }
+
+    /**
+     * Limpia los elementos de video del DOM
+     */
+    /**
+ * Limpia los elementos de video del DOM y detiene la cámara
+ */
+cleanupVideoElements() {
+    const cameraContainer = document.getElementById('cameraContainer');
+    
+    if (cameraContainer) {
+        const videoFeed = document.getElementById('webgazerVideoFeed');
+        const faceOverlay = document.getElementById('webgazerFaceOverlay');
+        const faceFeedbackBox = document.getElementById('webgazerFaceFeedbackBox');
+        
+        // Detener el stream de video de la cámara
+        if (videoFeed && videoFeed.srcObject) {
+            const stream = videoFeed.srcObject;
+            const tracks = stream.getTracks();
+            
+            tracks.forEach(track => {
+                track.stop();
+                console.log('Track de cámara detenido:', track.kind);
+            });
+            
+            videoFeed.srcObject = null;
+        }
+        
+        // Remover elementos del contenedor
+        if (videoFeed && videoFeed.parentNode === cameraContainer) {
+            cameraContainer.removeChild(videoFeed);
+        }
+        
+        if (faceOverlay && faceOverlay.parentNode === cameraContainer) {
+            cameraContainer.removeChild(faceOverlay);
+        }
+        
+        if (faceFeedbackBox && faceFeedbackBox.parentNode === cameraContainer) {
+            cameraContainer.removeChild(faceFeedbackBox);
+        }
+        
+        // Mostrar placeholder nuevamente
+        const placeholder = cameraContainer.querySelector('.camera-placeholder');
+        if (placeholder) {
+            placeholder.style.display = 'flex';
+        }
+    }
+    
+    // Remover cualquier elemento huérfano de WebGazer en el body
+    setTimeout(() => {
+        const orphanVideo = document.getElementById('webgazerVideoFeed');
+        const orphanOverlay = document.getElementById('webgazerFaceOverlay');
+        const orphanFeedback = document.getElementById('webgazerFaceFeedbackBox');
+        
+        if (orphanVideo) {
+            // Detener stream si existe
+            if (orphanVideo.srcObject) {
+                const tracks = orphanVideo.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+            orphanVideo.remove();
+        }
+        if (orphanOverlay) orphanOverlay.remove();
+        if (orphanFeedback) orphanFeedback.remove();
+    }, 100);
+}
+
+    /**
+     * Pausa la recolección de datos
+     */
+    pause() {
+        if (this.isRunning) {
+            webgazer.pause();
+            console.log('WebGazer pausado');
+        }
+    }
+
+    /**
+     * Reanuda la recolección de datos
+     */
+    resume() {
+        if (this.isRunning) {
+            webgazer.resume();
+            console.log('WebGazer reanudado');
+        }
+    }
+
+    /**
+     * Configura el listener para recibir predicciones de la mirada
+     */
+    setGazeListener(callback) {
+        this.gazeListener = callback;
+        
+        webgazer.setGazeListener((data, elapsedTime) => {
+            if (data == null) {
+                return;
+            }
+            
+            if (this.gazeListener) {
+                this.gazeListener(data, elapsedTime);
+            }
+        });
+    }
+
+    /**
+     * Obtiene una predicción en el momento actual
+     */
+    getCurrentPrediction() {
+        const prediction = webgazer.getCurrentPrediction();
+        return prediction;
+    }
+
+    /**
+     * Verifica si WebGazer está corriendo
+     */
+    isActive() {
+        return this.isRunning;
+    }
+}
+
+// Exportar instancia única
+export const webGazerManager = new WebGazerManager();
+
+
+################################################################################
+# MARKDOWN
+################################################################################
+
+
+================================================================================
+ARCHIVO: README.md
+================================================================================
+
+
+
+
+################################################################################
+# CONFIGURACIÓN
+################################################################################
+
+
+================================================================================
+ARCHIVO: script_extract_project.py
+================================================================================
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Script para extraer la estructura y contenido del proyecto WebGazer Lab
+Genera un archivo de texto con toda la documentación del código fuente
+"""
+
+import os
+from datetime import datetime
+from pathlib import Path
+
+# Configuración
+PROJECT_ROOT = "."  # Directorio actual (donde está el proyecto)
+OUTPUT_FILE = "project_documentation.txt"
+
+# Archivos a incluir (extensiones)
+INCLUDE_EXTENSIONS = {'.html', '.css', '.js', '.md', '.json', '.py'}
+
+# Directorios a excluir
+EXCLUDE_DIRS = {
+    'node_modules',
+    '.git',
+    '__pycache__',
+    'dist',
+    'build',
+    '.vscode',
+    '.idea'
+}
+
+# Archivos a excluir (librerías)
+EXCLUDE_FILES = {
+    'webgazer.js',  # Librería externa
+    'heatmap.js',
+    'heatmap.min.js'
+}
+
+# Archivos en mediapipe (solo listar, no incluir contenido)
+MEDIAPIPE_DIR = 'mediapipe'
+
+def should_exclude_dir(dir_path):
+    """Verifica si un directorio debe ser excluido"""
+    dir_name = os.path.basename(dir_path)
+    return dir_name in EXCLUDE_DIRS or dir_name.startswith('.')
+
+def should_include_file(file_path):
+    """Verifica si un archivo debe ser incluido"""
+    file_name = os.path.basename(file_path)
+    file_ext = os.path.splitext(file_name)[1]
+    
+    # Excluir archivos específicos
+    if file_name in EXCLUDE_FILES:
+        return False
+    
+    # Incluir solo extensiones permitidas
+    return file_ext in INCLUDE_EXTENSIONS
+
+def is_in_mediapipe(file_path):
+    """Verifica si el archivo está en la carpeta mediapipe"""
+    return MEDIAPIPE_DIR in Path(file_path).parts
+
+def get_relative_path(file_path, root):
+    """Obtiene la ruta relativa desde la raíz del proyecto"""
+    try:
+        return os.path.relpath(file_path, root)
+    except ValueError:
+        return file_path
+
+def get_file_tree(root_dir):
+    """Genera el árbol de directorios del proyecto"""
+    tree_lines = []
+    tree_lines.append("=" * 80)
+    tree_lines.append("ESTRUCTURA DEL PROYECTO")
+    tree_lines.append("=" * 80)
+    tree_lines.append("")
+    
+    for root, dirs, files in os.walk(root_dir):
+        # Filtrar directorios excluidos
+        dirs[:] = [d for d in dirs if not should_exclude_dir(os.path.join(root, d))]
+        
+        level = root.replace(root_dir, '').count(os.sep)
+        indent = ' ' * 2 * level
+        rel_path = get_relative_path(root, root_dir)
+        
+        if rel_path == '.':
+            tree_lines.append(f"{indent}webgazer-lab/")
+        else:
+            tree_lines.append(f"{indent}{os.path.basename(root)}/")
+        
+        # Archivos
+        sub_indent = ' ' * 2 * (level + 1)
+        for file in sorted(files):
+            file_path = os.path.join(root, file)
+            
+            # Marcar si es librería o si será incluido
+            if file in EXCLUDE_FILES:
+                tree_lines.append(f"{sub_indent}{file} [LIBRERÍA EXTERNA]")
+            elif is_in_mediapipe(file_path):
+                tree_lines.append(f"{sub_indent}{file} [MEDIAPIPE]")
+            elif should_include_file(file_path):
+                tree_lines.append(f"{sub_indent}{file}")
+    
+    tree_lines.append("")
+    return "\n".join(tree_lines)
+
+def extract_file_content(file_path, root_dir):
+    """Extrae el contenido de un archivo"""
+    lines = []
+    rel_path = get_relative_path(file_path, root_dir)
+    
+    lines.append("=" * 80)
+    lines.append(f"ARCHIVO: {rel_path}")
+    lines.append("=" * 80)
+    lines.append("")
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            lines.append(content)
+    except UnicodeDecodeError:
+        try:
+            with open(file_path, 'r', encoding='latin-1') as f:
+                content = f.read()
+                lines.append(content)
+        except Exception as e:
+            lines.append(f"[ERROR AL LEER ARCHIVO: {e}]")
+    except Exception as e:
+        lines.append(f"[ERROR AL LEER ARCHIVO: {e}]")
+    
+    lines.append("")
+    lines.append("")
+    
+    return "\n".join(lines)
+
+def generate_documentation(root_dir, output_file):
+    """Genera el archivo de documentación completo"""
+    
+    print(f"Generando documentación del proyecto...")
+    print(f"Directorio raíz: {os.path.abspath(root_dir)}")
+    print(f"Archivo de salida: {output_file}")
+    print("")
+    
+    with open(output_file, 'w', encoding='utf-8') as out:
+        # Encabezado
+        out.write("=" * 80 + "\n")
+        out.write("DOCUMENTACIÓN DEL PROYECTO: WEBGAZER LAB\n")
+        out.write("Práctica de Eye Tracking - UX/UI Laboratory\n")
+        out.write("Universidad Internacional SEK (UISEK) Ecuador\n")
+        out.write("=" * 80 + "\n")
+        out.write(f"\nFecha de generación: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        out.write("\n\n")
+        
+        # Árbol de directorios
+        tree = get_file_tree(root_dir)
+        out.write(tree)
+        out.write("\n\n")
+        
+        # Separador
+        out.write("=" * 80 + "\n")
+        out.write("CONTENIDO DE ARCHIVOS\n")
+        out.write("=" * 80 + "\n")
+        out.write("\n\n")
+        
+        # Recopilar archivos
+        files_to_process = []
+        mediapipe_files = []
+        
+        for root, dirs, files in os.walk(root_dir):
+            # Filtrar directorios excluidos
+            dirs[:] = [d for d in dirs if not should_exclude_dir(os.path.join(root, d))]
+            
+            for file in sorted(files):
+                file_path = os.path.join(root, file)
+                
+                if is_in_mediapipe(file_path):
+                    mediapipe_files.append(get_relative_path(file_path, root_dir))
+                elif should_include_file(file_path):
+                    files_to_process.append(file_path)
+        
+        # Procesar archivos por categoría
+        categories = {
+            'HTML': [f for f in files_to_process if f.endswith('.html')],
+            'CSS': [f for f in files_to_process if f.endswith('.css')],
+            'JavaScript': [f for f in files_to_process if f.endswith('.js')],
+            'Markdown': [f for f in files_to_process if f.endswith('.md')],
+            'Configuración': [f for f in files_to_process if f.endswith(('.json', '.py'))]
+        }
+        
+        for category, files in categories.items():
+            if files:
+                out.write("\n")
+                out.write("#" * 80 + "\n")
+                out.write(f"# {category.upper()}\n")
+                out.write("#" * 80 + "\n")
+                out.write("\n\n")
+                
+                for file_path in files:
+                    print(f"Procesando: {get_relative_path(file_path, root_dir)}")
+                    content = extract_file_content(file_path, root_dir)
+                    out.write(content)
+        
+        # Listar archivos de mediapipe
+        if mediapipe_files:
+            out.write("\n")
+            out.write("=" * 80 + "\n")
+            out.write("ARCHIVOS DE MEDIAPIPE (no incluidos en detalle)\n")
+            out.write("=" * 80 + "\n")
+            out.write("\n")
+            for file in mediapipe_files:
+                out.write(f"  - {file}\n")
+            out.write("\n")
+        
+        # Resumen
+        out.write("\n")
+        out.write("=" * 80 + "\n")
+        out.write("RESUMEN\n")
+        out.write("=" * 80 + "\n")
+        out.write(f"\nTotal de archivos documentados: {len(files_to_process)}\n")
+        out.write(f"Archivos MediaPipe (listados): {len(mediapipe_files)}\n")
+        
+        for category, files in categories.items():
+            if files:
+                out.write(f"{category}: {len(files)} archivo(s)\n")
+    
+    print("")
+    print(f"Documentación generada exitosamente: {output_file}")
+    print(f"Total de archivos procesados: {len(files_to_process)}")
+
+if __name__ == "__main__":
+    generate_documentation(PROJECT_ROOT, OUTPUT_FILE)
+
+
+================================================================================
+ARCHIVOS DE MEDIAPIPE (no incluidos en detalle)
+================================================================================
+
+  - mediapipe/face_mesh/README.md
+  - mediapipe/face_mesh/face_mesh.binarypb
+  - mediapipe/face_mesh/face_mesh.js
+  - mediapipe/face_mesh/face_mesh_solution_packed_assets.data
+  - mediapipe/face_mesh/face_mesh_solution_packed_assets_loader.js
+  - mediapipe/face_mesh/face_mesh_solution_simd_wasm_bin.data
+  - mediapipe/face_mesh/face_mesh_solution_simd_wasm_bin.js
+  - mediapipe/face_mesh/face_mesh_solution_simd_wasm_bin.wasm
+  - mediapipe/face_mesh/face_mesh_solution_wasm_bin.js
+  - mediapipe/face_mesh/face_mesh_solution_wasm_bin.wasm
+  - mediapipe/face_mesh/index.d.ts
+  - mediapipe/face_mesh/package.json
+
+
+================================================================================
+RESUMEN
+================================================================================
+
+Total de archivos documentados: 17
+Archivos MediaPipe (listados): 12
+HTML: 4 archivo(s)
+CSS: 3 archivo(s)
+JavaScript: 8 archivo(s)
+Markdown: 1 archivo(s)
+Configuración: 1 archivo(s)
